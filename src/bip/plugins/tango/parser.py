@@ -377,8 +377,6 @@ class Parser:
             #vita 49.1 frame packet.  But each frame packet seems to only
             #contain one vita 49.2 packet + some junk that I can't make sense
             #of yet.
-            #
-            # TODO: fix this when more info is available
             self._packets_read += 1
             if vita_payload != BAD_PACKET_STATUS_CODE:
                 header = vita.vrt_header(vita_payload)

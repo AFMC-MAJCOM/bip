@@ -97,6 +97,7 @@ class Process_Message:
         writes orphan data packets to the packet data parquet
         '''
         for packet in orphan_packet_list:
+            #SOP is 3 32-byte headers
             assert packet[0:24] == START_OF_PACKET
             SOP = packet[24:120] #skip the start of packet
             SOP_obj = mblb.mblb_Packet(SOP)
@@ -133,6 +134,7 @@ class Process_Message:
             '''
             packet = bytearray(packet)
             
+            #SOP is 3 32-byte headers
             SOP = packet[24:120] #skip the start of packet
             SOP_obj = mblb.mblb_Packet(SOP)
                 

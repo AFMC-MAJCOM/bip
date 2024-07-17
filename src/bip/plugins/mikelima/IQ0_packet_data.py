@@ -123,7 +123,7 @@ class Process_IQ0_Packet():
             "AFS_mode": np.float32(self.AFS_mode),
             "SchedNum": np.float32(self.SchedNum),
             "SIinSchedNum": np.float32(self.SIinSchedNum),
-            "time": np.float64(self.time / 1000000),
+            "time": np.float64(self.time / 1000000), #us to s
             "samples_i_left": left_data[:,0],
             "samples_q_left": left_data[:,1],
             "samples_i_right": right_data[:,0],
@@ -136,7 +136,7 @@ class Process_IQ0_Packet():
         
     def process_orphan_packet(self, packet: bytearray, SOP_obj):
         data = np.frombuffer(packet, 
-                            offset=np.uint64(120), #*4
+                            offset=np.uint64(3*40), #markers plus header for 3 lanes 
                             count=np.uint64((SOP_obj.packet_size)/2), 
                             dtype = np.int16).reshape((-1, 2))
         self.time = np.nan
@@ -160,7 +160,7 @@ class Process_IQ0_Packet():
         '''
 
         data = np.frombuffer(stream, 
-                            offset=np.uint64(120), #*4
+                            offset=np.uint64(3*40), #markers plus header for 3 lanes 
                             count=np.uint64((packet.packet_size)/2), 
                             dtype = np.int16).reshape((-1, 2))
         self.left_data = data[::2]

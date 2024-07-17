@@ -58,7 +58,7 @@ schema = [ _schema_elt(e) for e in _schema ]
 
 class _SignalDataPacket(SignalDataPacket):
     def __init__(self, payload: bytes, payload_size: int, context_key:str = "", **kwargs):
-        super().__init__(payload, payload_size = payload_size)
+        super().__init__(payload, payload_size = payload_size, vendor = 'Tango')
         tsi = self.integer_timestamp
         tsf0, tsf1 = self.fractional_timestamp
         self.time = tsi + ( (int(tsf1) << 32) + tsf0) *1e-12
@@ -97,7 +97,7 @@ class SignalData:
         self.recorder.add_record({
             "packet_id": np.uint32(self.packet_id),
             
-            "packet_size": np.uint16(header.packet_size +1),
+            "packet_size": np.uint16(header.packet_size),
             "packet_count": np.uint16(header.packet_count),
             "tsfd": np.uint8(header.tsf),
             "tsid": np.uint8(header.tsi),
@@ -135,7 +135,7 @@ class SignalData:
             payload_size: int,
             context_packet_key: str = ""):
         #payload_size -1 since tango adds an extra trailer
-        self.add_record(_SignalDataPacket(payload, (payload_size-1), context_packet_key),
+        self.add_record(_SignalDataPacket(payload, payload_size, context_packet_key),
                 frame_index=frame_index,
                 packet_index=packet_index)
         self.packet_id += 1

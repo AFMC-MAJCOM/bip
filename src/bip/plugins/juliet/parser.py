@@ -59,7 +59,6 @@ class Parser:
             self.clean = True
         self._bytes_read = 0
         self._packets_read = 0
-        self._frame_index = -1
 
         self._bad_packets = 0 
         self._unknown_packets = 0 
@@ -179,7 +178,7 @@ class Parser:
         assert header[1] > 0
 
         start_bytes = (self._bytes_read + bytes_read)
-        self._frame_index += 1
+        #Header[1] is the size of the payload in 4-byte words
         expected_size = 4 * header[1]
         payload = bytearray(expected_size)
         payload_size = buf.readinto(payload)
@@ -224,28 +223,30 @@ class Parser:
         
 
     def process_packet(self, packet_type: int, indicators: int, payload: bytes):
+        # data is framed 1 frame per vita 49.2 packet
+         # so frame_index and packet_index are the same
         if packet_type == 0b0001:
             self.signal_data.process(payload,
-                    frame_index=self._packets_read - 1,
-                    packet_index=self._packets_read - 1)
+                    frame_index=self._packets_read,
+                    packet_index=self._packets_read)
         elif packet_type == 0b0111:
             if indicators == 0b0000:
                 self.extension_command_data.process(payload,
-                        frame_index=self._packets_read - 1,
-                        packet_index=self._packets_read - 1)
+                        frame_index=self._packets_read,
+                        packet_index=self._packets_read)
             elif indicators == 0b0100:
                 if len(payload) == (9*4):
                     print("AckX not implemented")
                 elif len(payload) == (15*4):
                     self.ackr_data.process(payload,
-                        frame_index=self._packets_read - 1,
-                        packet_index=self._packets_read - 1)
+                        frame_index=self._packets_read,
+                        packet_index=self._packets_read)
                 else:
                     print("Unsupported Packet Type")
         elif packet_type == 0b0101:
             self.context_data.process(payload,
-                        frame_index=self._packets_read - 1,
-                        packet_index=self._packets_read - 1)
+                        frame_index=self._packets_read,
+                        packet_index=self._packets_read)
 
         else:
             print(f"unexpected packet type {packet_type:#06b}")
@@ -257,9 +258,6 @@ class Parser:
 
         vita_payload = self.read_packet(stream)
         while vita_payload:
-            # data is framed 1 frame per vita 49.2 packet
-            # so frame_index and packet_index are the same
-            self._packets_read += 1
             header = vita.vrt_header(vita_payload)
             self.process_packet(header.packet_type, header.indicators, vita_payload)
             if progress_bar is not None:

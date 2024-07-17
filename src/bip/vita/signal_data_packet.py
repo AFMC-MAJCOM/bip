@@ -36,12 +36,25 @@ class SignalDataPacket(VRTPacket):
     def __init__(self, payload: bytes, **kwargs):
         super().__init__(payload)
         
-        T = self.signal_data_indicators.trailer
-        self.trailer = self.words[-1] if T else 0
-        if 'payload_size' in kwargs:
-            self.sample_count = (kwargs.get('payload_size')) - 7 - int(T)
+        # 1 Trailer exists, 0 Trailer does not
+        trailer_indicator = self.signal_data_indicators.trailer
+         
+        if trailer_indicator == 1:
+            # Tango has a 2 word vendor while Juliet has a 1 word trailer
+            if 'vendor' in kwargs and kwargs.get('vendor') == 'Tango':
+                self.trailer = self.words[-2:]
+                trailer_size = 2
+            else:
+                self.trailer = self.words[-1]
+                trailer_size = 1
         else:
-            self.sample_count = self.packet_header.packet_size - 7 - int(T)
+            self.trailer = 0
+            trailer_size = 0
+
+        if 'payload_size' in kwargs:
+            self.sample_count = (kwargs.get('payload_size')) - 7 - int(trailer_size)
+        else:
+            self.sample_count = self.packet_header.packet_size - 7 - int(trailer_size)
 
         self.data = np.frombuffer(
                 self.payload,
