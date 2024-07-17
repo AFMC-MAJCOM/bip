@@ -18,10 +18,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pytest
+          pip install pytest pytest-cov
           pip install .
 
       - name: pytest
         run: |
-          pytest -vv tests
+          pytest -vv --cov=bip tests/ > pytest-coverage.txt
       
