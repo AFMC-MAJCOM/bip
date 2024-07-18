@@ -23,5 +23,5 @@ jobs:
 
       - name: pytest
         run: |
-          pytest -vv tests > pytest-coverage.txt
+          pytest -vv tests 
       
