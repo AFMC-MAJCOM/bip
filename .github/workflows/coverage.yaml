@@ -28,7 +28,8 @@
 
 name: pytest-reporter workflow
 
-on: [pull_request]
+on: 
+  push:
 
 jobs:
   tests:
