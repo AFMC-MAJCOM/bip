@@ -26,6 +26,12 @@ EXTENSION_COMMAND_DATA_FILENAME="extension_command"
 ACKR_DATA_FILENAME="ackr"
 CONTEXT_DATA_FILENAME="context_data"
 
+SIGNAL_DATA_PACKET = 0b0001
+CONTEXT_DATA_PACKET = 0b0101
+COMMAND_PACKET = 0b0111
+EXTENSION_COMMAND_PACKET = 0b0000
+ACK_DATA_PACKET = 0b0100
+
 bad_packets_schema = pa.schema([
     ("start_bytes", pa.uint64()),
     ("bytes", pa.list_(pa.uint32(), -1)),
@@ -199,9 +205,9 @@ class Parser:
             self._bad_packets += 1
             self._packets_read += 1
             raise RuntimeError(f"incomplete packet: {payload_size}/{expected_size} bytes")
-        elif(packet_type == 0b0101 or packet_type == 0b0001 or
-             (packet_type == 0b0111 and indicators == 0b0000) or
-             (packet_type == 0b0111 and indicators == 0b0100 and len(payload) == 60)
+        elif(packet_type == CONTEXT_DATA_PACKET or packet_type == SIGNAL_DATA_PACKET or
+             (packet_type == COMMAND_PACKET and indicators == EXTENSION_COMMAND_PACKET) or
+             (packet_type == COMMAND_PACKET and indicators == ACK_DATA_PACKET and len(payload) == 60)
             ):
             self.recorder.add_record({
             "time_ns": np.uint64(header[0]),
@@ -225,16 +231,16 @@ class Parser:
     def process_packet(self, packet_type: int, indicators: int, payload: bytes):
         # data is framed 1 frame per vita 49.2 packet
          # so frame_index and packet_index are the same
-        if packet_type == 0b0001:
+        if packet_type == SIGNAL_DATA_PACKET:
             self.signal_data.process(payload,
                     frame_index=self._packets_read,
                     packet_index=self._packets_read)
-        elif packet_type == 0b0111:
-            if indicators == 0b0000:
+        elif packet_type == COMMAND_PACKET:
+            if indicators == EXTENSION_COMMAND_PACKET:
                 self.extension_command_data.process(payload,
                         frame_index=self._packets_read,
                         packet_index=self._packets_read)
-            elif indicators == 0b0100:
+            elif indicators == ACK_DATA_PACKET:
                 if len(payload) == (9*4):
                     print("AckX not implemented")
                 elif len(payload) == (15*4):
@@ -243,7 +249,7 @@ class Parser:
                         packet_index=self._packets_read)
                 else:
                     print("Unsupported Packet Type")
-        elif packet_type == 0b0101:
+        elif packet_type == CONTEXT_DATA_PACKET:
             self.context_data.process(payload,
                         frame_index=self._packets_read,
                         packet_index=self._packets_read)

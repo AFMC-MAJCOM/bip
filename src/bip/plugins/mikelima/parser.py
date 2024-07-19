@@ -20,6 +20,10 @@ UNHANDLED_MARKERS = [bytes.fromhex('F37FFF7FFF7FFF7F'),
                     bytes.fromhex('F87FFF7FFF7FFF7F'),
                     bytes.fromhex('F97FFF7FFF7FFF7F'),
                     bytes.fromhex('FA7FFF7FFF7FFF7F')]
+LANES = 3
+MARKER_BYTES = 8
+HEADER_BYTES = 32
+EOM_BYTES = 24
 
 class Parser:
     options: dict
@@ -121,10 +125,10 @@ class Parser:
             if message[-8:] == bytes.fromhex('F17FFF7FFF7FFF7F'):
                 #16 bytes for the packet markers for the other 2 lanes
                 #plus 3 32-byte headers
-                packet_header = bytearray(16 + 3*32)
+                packet_header = bytearray(16 + (LANES*HEADER_BYTES))
 
                 header_length = buf.readinto(packet_header)
-                if header_length != 112:
+                if header_length != (16+(LANES*HEADER_BYTES)):
                     print('Message is broken in the packet header')
                     blank_end_of_message = bytearray(24*8)
                     blank_EOM_obj = mblb.mblb_EOM(blank_end_of_message)
@@ -132,12 +136,12 @@ class Parser:
         
                     self._bytes_read += bytes_read + message_size
                     return message[:-8], SOM_obj
-                SOP_obj = mblb.mblb_Packet(packet_header[16:112])
+                SOP_obj = mblb.mblb_Packet(packet_header[16:(16+(LANES*HEADER_BYTES))])
                 packet_data = bytearray(SOP_obj.packet_size)
                 data_length = buf.readinto(packet_data)
                 if data_length != SOP_obj.packet_size:
                     print('Message is broken in the packet data')
-                    blank_end_of_message = bytearray(24*8)
+                    blank_end_of_message = bytearray(EOM_BYTES*8)
                     blank_EOM_obj = mblb.mblb_EOM(blank_end_of_message)
                     self.__add_record(SOM_obj, blank_EOM_obj)
         
@@ -154,7 +158,7 @@ class Parser:
                 raise Exception('This Bin file contains unhandled markers')
             if additional_message_length != 8:
                 print('Message is broken no EOM found')
-                blank_end_of_message = bytearray(24*8)
+                blank_end_of_message = bytearray(EOM_BYTES*8)
                 blank_EOM_obj = mblb.mblb_EOM(blank_end_of_message)
                 self.__add_record(SOM_obj, blank_EOM_obj)
         
@@ -168,14 +172,14 @@ class Parser:
         EOM_marker = bytearray(16)
         buf.readinto(EOM_marker)
         assert EOM_marker == bytes.fromhex('F27FFF7FFF7FFF7FF27FFF7FFF7FFF7F')
-        #EOM is 24 8-byte
-        end_of_message = bytearray(22*8)
+        #EOM is 24 8-byte WORDS
+        end_of_message = bytearray(EOM_BYTES*8)
         buf.readinto(end_of_message)
         EOM_obj = mblb.mblb_EOM(end_of_message)
 
         self.__add_record(SOM_obj, EOM_obj)
         
-        self._bytes_read += bytes_read + message_size + 16 + (24*8)
+        self._bytes_read += bytes_read + message_size + 16 + (EOM_BYTES*8)
         return message[:-8], SOM_obj
     
     def __add_record(self,

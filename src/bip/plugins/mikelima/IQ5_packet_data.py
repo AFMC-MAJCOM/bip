@@ -5,6 +5,9 @@ import pyarrow as pa
 import numpy as np
 import os
 
+LANES = 3
+MARKER_BYTES = 8
+HEADER_BYTES = 32
 
 _IQ5_packet_schema = [
     ("IQ_type", pa.float32()),
@@ -142,7 +145,7 @@ class Process_IQ5_Packet():
         
     def process_orphan_packet(self, packet: bytearray, SOP_obj):
         data = np.frombuffer(packet, 
-                            offset=np.uint64(3*40), #markers plus header for 3 lanes 
+                            offset=np.uint64(LANES*(MARKER_BYTES+HEADER_BYTES)),
                             count=np.uint64((SOP_obj.packet_size)/2), 
                             dtype = np.int16).reshape((-1, 2))
         self.time = np.nan
@@ -167,7 +170,7 @@ class Process_IQ5_Packet():
         '''
 
         data = np.frombuffer(stream, 
-                            offset=np.uint64(3*40), #markers plus header for 3 lanes 
+                            offset=np.uint64(LANES*(MARKER_BYTES+HEADER_BYTES)),
                             count=np.uint64((packet.packet_size)/2), 
                             dtype = np.int16).reshape((-1, 2))
         self.left_data = data[::3]
