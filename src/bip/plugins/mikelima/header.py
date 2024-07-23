@@ -18,6 +18,10 @@ def _SOM_search(b: bytes) -> int:
 
 
 def Determine_timestamp(header: bytearray):
+    '''
+    This function is based on the mikelima bins that we have seen. If future 
+    bins have a slightly different header formet then this will all break.
+	'''
     year = str(header[38:42].decode("utf-8"))
     julian_day = str(header[43:46].decode("utf-8"))
     h = int(header[47:49].decode("utf-8"))
@@ -36,9 +40,15 @@ def Determine_timestamp(header: bytearray):
     
     epoch = datetime.datetime.strptime(epoch_string,Time_Format).timestamp()
 
-    return int(epoch*10**6)
+    return int(epoch*(10**6))
     
 def Determine_IQ_and_Session(header:bytearray):
+    '''
+    This function asuumes that the full file path of the bin file will appear
+    in ascii at the start of the bin file.
+    If the bin stops recording this or if the file path format changes then this
+    will break
+    '''
     header_string = header.decode("ascii", 'ignore')
 
     header_string_parts = header_string.split('/')
@@ -60,7 +70,7 @@ def unpack_SOM(header_bytes: bytes, stream: RawIOBase):
     if buffer != bytes.fromhex('F07FFF7FFF7FFF7FF07FFF7FFF7FFF7F'):
         raise RuntimeError("unexpected SOM format")
         
-    # 3 lanes of 4 words and 24 SDW is 36 8-byte words
+    # 3 lanes of 4 words plus 24 SDW is 36 8-byte words
     bytes_out = bytearray(36*8)
     
     number_of_bytes_read= stream.readinto(bytes_out)
@@ -72,6 +82,7 @@ def unpack_SOM(header_bytes: bytes, stream: RawIOBase):
 def read_first_header(stream: RawIOBase):
     orphan_packet_list = []
     header = bytearray()
+    #read first 8 byte word
     buffer = stream.read(8)
     while True:
         try:
@@ -80,7 +91,10 @@ def read_first_header(stream: RawIOBase):
         except Exception as e:
             if buffer == bytes.fromhex('F17FFF7FFF7FFF7F'):
                 orphan_packet = bytearray()
-                orphan_packet_header = stream.read(112)
+                #16 bytes are the headers for the other 2 lanes
+                #Packet headers consist of 4 8-byte words
+                #Each of the 3 lanes have their own header
+                orphan_packet_header = stream.read((16 + 3*32))
                 SOP_obj = mblb.mblb_Packet(orphan_packet_header[16:112])
                 orphan_packet_data = stream.read(SOP_obj.packet_size)
                 orphan_packet += buffer + orphan_packet_header + orphan_packet_data

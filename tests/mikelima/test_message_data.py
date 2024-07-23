@@ -120,9 +120,8 @@ def test_read_packets(fake_message):
     
 def test_read_orphan_packets(fake_packet):
     fake_packet_list = [fake_packet, fake_packet]
-    fake_session_id = 12
     message_processor =  Process_Message(Path(), DummyWriter)
     
-    orphan_packet_number = message_processor.process_orphan_packets(fake_packet_list, fake_session_id)
+    orphan_packet_number = message_processor.process_orphan_packets(fake_packet_list)
     
     assert orphan_packet_number == 2

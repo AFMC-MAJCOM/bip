@@ -220,7 +220,7 @@ class HeartbeatContext:
         self.recorder.add_record({
             "packet_id": np.uint32(self.packet_id),
             
-            "packet_size": np.uint16(header.packet_size +1),
+            "packet_size": np.uint16(header.packet_size),
             "packet_count": np.uint16(header.packet_count),
             "tsfd": np.uint8(header.tsf),
             "tsid": np.uint8(header.tsi),

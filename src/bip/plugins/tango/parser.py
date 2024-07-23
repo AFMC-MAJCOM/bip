@@ -27,6 +27,10 @@ CONTEXT_FILENAME="context"
 HEARTBEAT_CONTEXT_FILENAME="heartbeat_context"
 GPS_EXTENSION_CONTEXT_FILENAME="gps_context"
 
+SIGNAL_DATA_PACKET = 0b0001
+CONTEXT_DATA_PACKET = 0b0100
+OTHER_CONTEXT_PACKETS = 0b0101
+
 bad_packets_schema = pa.schema([
     ("frame_count", pa.uint32()),
     ("frame_size", pa.uint32()),
@@ -322,14 +326,14 @@ class Parser:
         packet_class_code = int(class_id & 0xFFFF)
         info_class_code = int(class_id >> 16)
         
-        if packet_type == 0b0001:
+        if packet_type == SIGNAL_DATA_PACKET:
             self.signal_data.process(
                     payload,
                     frame_index = self._frames_read,
                     packet_index = self._packets_read,
                     payload_size = payload_size,
                     context_packet_key = self._latest_context_key)
-        elif packet_type == 0b0100:
+        elif packet_type == CONTEXT_DATA_PACKET:
             # We found a new context packet, so set the latest context key
             self._latest_context_key = self._context_key_function(str(self._frames_read))
             
@@ -338,12 +342,12 @@ class Parser:
                     frame_index = self._frames_read,
                     packet_index = self._packets_read,
                     context_packet_key = self._latest_context_key)
-        elif (packet_type == 0b0101) & (info_class_code == 1) & (packet_class_code == 2):
+        elif (packet_type == OTHER_CONTEXT_PACKETS) & (info_class_code == 1) & (packet_class_code == 2):
             self.heartbeat_context.process(
                     payload,
                     frame_index = self._frames_read,
                     packet_index = self._packets_read)
-        elif (packet_type == 0b0101) & (info_class_code == 3) & (packet_class_code == 3):
+        elif (packet_type == OTHER_CONTEXT_PACKETS) & (info_class_code == 3) & (packet_class_code == 3):
             self.gps_context.process(
                     payload,
                     frame_index = self._frames_read,
@@ -377,8 +381,6 @@ class Parser:
             #vita 49.1 frame packet.  But each frame packet seems to only
             #contain one vita 49.2 packet + some junk that I can't make sense
             #of yet.
-            #
-            # TODO: fix this when more info is available
             self._packets_read += 1
             if vita_payload != BAD_PACKET_STATUS_CODE:
                 header = vita.vrt_header(vita_payload)
