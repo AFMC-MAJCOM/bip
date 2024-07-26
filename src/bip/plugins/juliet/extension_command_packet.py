@@ -67,7 +67,7 @@ class _ExtensionCommandPacket(VitaExtensionCommandPacket):
         self.az, self.el = bit_manipulation.pointing_vector(self.words[25])
         self.cited_sid = self.words[26]
         self.dwell = bit_manipulation.dwell(self.words[28],self.words[29])
-
+        print(self.offset)
 class ExtensionCommand:
     def __init__(self,
             output_path: Path,
