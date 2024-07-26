@@ -23,5 +23,5 @@ jobs:
 
       - name: pytest
         run: |
-          pytest -vv cov=./src/bip tests 
+          pytest -vv tests 
       
