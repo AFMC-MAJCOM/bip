@@ -152,7 +152,7 @@ class DataContext:
             "cif3": np.uint32(packet.cif3),
             "cif4": np.uint32(packet.cif4),
             "bandwidth": np.double(packet.bandwidth),
-            "freq": np.float64(packet.freq),
+            "freq": np.double(packet.freq),
             "rfFreqOffset": np.double(packet.rfFreqOffset),
             "gain": np.uint32(packet.gain),
             "sampling_rate": np.double(packet.sampling_rate),

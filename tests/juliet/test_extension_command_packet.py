@@ -155,7 +155,7 @@ def test_ecp_packet_header_II(simple_ecp_packet_II):
 
 def test_ecp_packet_II(simple_ecp_packet_II):
     packet = Ecp(simple_ecp_packet_II[1])
-    print(packet.offset)
+
     assert packet.stream_id == 0xBEADE007
 
     assert packet.integer_timestamp == 0xFFFF
