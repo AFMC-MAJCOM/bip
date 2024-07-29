@@ -57,11 +57,9 @@ def sample_rate(word1, word2):
 
 def time(tsi, tsf0, tsf1):
     tsf0 = np.uint64(tsf0)
-    print(tsf0)
     tsf1 = np.uint64(tsf1)
-    print(tsf1)
     tsi = np.uint64(tsi)
-    print(tsi)
+
     return np.float64(tsi + ((tsf0 << 32) + tsf1) * 10**-12)
 
 
