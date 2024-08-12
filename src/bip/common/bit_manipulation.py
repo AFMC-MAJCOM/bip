@@ -8,7 +8,7 @@ import numpy as np
 #Current Juliet Implementations
 def bandwidth(word1, word2):
     raw_data = (np.uint64(word1) << 32) | np.uint64(word2)
-    return np.uint32(raw_data * (10**-6) * (2**-20)) 
+    return np.float64(raw_data * (10**-6) * (2**-20)) 
 
 def dwell(word1, word2):
     raw_data = (np.uint64(word1) << 32) | np.uint64(word2)
@@ -46,10 +46,6 @@ def sample_rate(word1, word2):
     return np.uint32(raw_data * (10**-6) * (2**-20)) 
 
 def time(tsi, tsf0, tsf1):
-    tsf0 = np.uint64(tsf0)
-    tsf1 = np.uint64(tsf1)
-    tsi = np.uint64(tsi)
-
     return np.float64(np.uint64(tsi) +\
                     ((np.uint64(tsf0) << 32) + np.uint64(tsf1)) * 10**-12)
 
