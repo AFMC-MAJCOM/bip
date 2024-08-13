@@ -148,6 +148,7 @@ def main():
                 recorder_opts=recorder_opts,
                 data_recorder=data_recorder,
                 clean = args.clean,
+                partitioned = args.partition_data,
                 orphan_context_key=args.partition_orphan_key,
                 context_key_function=lambda k: f"{args.partition_key_prefix}{k}"
                 )

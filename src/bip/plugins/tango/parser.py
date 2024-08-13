@@ -64,6 +64,9 @@ class Parser:
         self.clean = False
         if kwargs.get("clean") == True:
             self.clean = True
+        self.partitioned = False
+        if kwargs.get("partitioned") == True:
+            self.partitioned = True
         self._bytes_read = 0
         self._packets_read = 0
         self._frames_read = 0
@@ -361,6 +364,21 @@ class Parser:
                 "frame_index": np.uint32(self._frames_read),
                 "bytes": np.frombuffer(payload, count = -1, dtype=np.uint32),
             })
+    
+    def set_last_context_key(self):
+        last_context_key = self._latest_context_key.rsplit('_', 1)
+        last_context_key = last_context_key[0]+'_LAST'
+        self.context.recorder.data[-1]['local_context_key'] = last_context_key
+
+        if self.partitioned:
+            data_output = self.signal_data.recorder.metadata['output']
+            last_data_path = os.path.join(data_output, f'data_key={self._latest_context_key}')
+            os.rename(last_data_path, os.path.join(data_output, f'data_key={last_context_key}'))
+
+        data_packet_list = self.signal_data.recorder.data
+        for index, packet in enumerate(data_packet_list):
+            if packet['data_key'] == self._latest_context_key:
+                self.signal_data.recorder.data[index]['data_key'] = last_context_key
 
     def parse_stream(self, stream: RawIOBase, progress_bar=None):
         self.logger.info("Starting the parsing...")
@@ -401,3 +419,4 @@ class Parser:
 
             vita_payload, payload_size = self.read_packet(stream)
                 
+        self.set_last_context_key()
