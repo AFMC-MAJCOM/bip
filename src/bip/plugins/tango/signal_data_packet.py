@@ -114,7 +114,7 @@ class SignalData:
             "tsf1": np.uint32(packet.fractional_timestamp[1]),
             "time": np.float64(packet.time),
 
-            "stream_id": np.uint32(packet.stream_id),
+            "stream_id": np.uint32(packet.stream_identifier),
             "sample_count": np.uint32(packet.sample_count),
             "trailer": np.uint32(packet.trailer),
 

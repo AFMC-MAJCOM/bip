@@ -28,10 +28,6 @@ class SignalDataIndicators:
     def signal_spectrum(self) -> bool:
         return bool(self.value & (1 << 24))
 
-
-
-
-
 class SignalDataPacket(VRTPacket):
     def __init__(self, payload: bytes, **kwargs):
         super().__init__(payload)
@@ -66,14 +62,6 @@ class SignalDataPacket(VRTPacket):
     @property
     def signal_data_indicators(self) -> SignalDataIndicators:
         return SignalDataIndicators(self.words[0])
-
-
-    # signal data packets vita 49.2 properties
-
-    @property
-    def stream_id(self) -> int:
-        return self.words[1]
-
 
     @property
     def class_id_codes(self) -> ClassIdentifier:

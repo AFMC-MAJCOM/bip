@@ -64,9 +64,6 @@ class Parser:
         self.clean = False
         if kwargs.get("clean") == True:
             self.clean = True
-        self.partitioned = False
-        if kwargs.get("partitioned") == True:
-            self.partitioned = True
         self._bytes_read = 0
         self._packets_read = 0
         self._frames_read = 0
@@ -418,5 +415,27 @@ class Parser:
                     print(f"{(self.bytes_read / self.EOF) * 100:.2f}% processed")
 
             vita_payload, payload_size = self.read_packet(stream)
+<<<<<<<<< saved version
+            if vita_payload != BAD_PACKET_STATUS_CODE:
+                header = vita.vrt_header(vita_payload)
+                packet = vita.vrt_packet(vita_payload)
+                class_id = packet.class_identifier
+            
+                self.process_packet(header.packet_type, class_id[1], vita_payload, payload_size)
+            
+            self._packets_read += 1
+            self._frames_read += 1
+
+            if progress_bar is not None:
+                progress_bar.update(self.bytes_read - last_read)
+                last_read = self.bytes_read
+            else:
+                if (self.packets_read % 1000 == 0):
+                    print(f"{(self.bytes_read / self.EOF) * 100:.2f}% processed")
+
+            vita_payload, payload_size = self.read_packet(stream)
                 
         self.set_last_context_key()
+=========
+
+>>>>>>>>> local version
