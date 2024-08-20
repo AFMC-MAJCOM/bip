@@ -28,7 +28,7 @@ _schema = [
 
     ("stream_id", pa.uint32()),
     ("sample_count", pa.uint32()),
-    ("trailer", pa.uint32()),
+    ("trailer", pa.list_(pa.uint32(), -1)),
 
     ("frame_index", pa.uint32()),
     ("packet_index", pa.uint32()),
@@ -116,7 +116,7 @@ class SignalData:
 
             "stream_id": np.uint32(packet.stream_id),
             "sample_count": np.uint32(packet.sample_count),
-            "trailer": np.uint32(packet.trailer),
+            "trailer": packet.trailer,
 
             "frame_index": np.uint32(frame_index),
             "packet_index": np.uint32(packet_index),
