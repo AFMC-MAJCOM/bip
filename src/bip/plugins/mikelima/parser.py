@@ -21,9 +21,8 @@ UNHANDLED_MARKERS = [bytes.fromhex('F37FFF7FFF7FFF7F'),
                     bytes.fromhex('F97FFF7FFF7FFF7F'),
                     bytes.fromhex('FA7FFF7FFF7FFF7F')]
 LANES = 3
-MARKER_BYTES = 8
-HEADER_BYTES = 32
-EOM_BYTES = 24
+PACKET_HEADER_BYTES = 32
+EOM_BYTES = 22
 
 class Parser:
     options: dict
@@ -125,10 +124,10 @@ class Parser:
             if message[-8:] == bytes.fromhex('F17FFF7FFF7FFF7F'):
                 #16 bytes for the packet markers for the other 2 lanes
                 #plus 3 32-byte headers
-                packet_header = bytearray(16 + (LANES*HEADER_BYTES))
+                packet_header = bytearray(16 + (LANES*PACKET_HEADER_BYTES))
 
                 header_length = buf.readinto(packet_header)
-                if header_length != (16+(LANES*HEADER_BYTES)):
+                if header_length != (16+(LANES*PACKET_HEADER_BYTES)):
                     print('Message is broken in the packet header')
                     blank_end_of_message = bytearray(24*8)
                     blank_EOM_obj = mblb.mblb_EOM(blank_end_of_message)
@@ -136,7 +135,7 @@ class Parser:
         
                     self._bytes_read += bytes_read + message_size
                     return message[:-8], SOM_obj
-                SOP_obj = mblb.mblb_Packet(packet_header[16:(16+(LANES*HEADER_BYTES))])
+                SOP_obj = mblb.mblb_Packet(packet_header[16:(16+(LANES*PACKET_HEADER_BYTES))])
                 packet_data = bytearray(SOP_obj.packet_size)
                 data_length = buf.readinto(packet_data)
                 if data_length != SOP_obj.packet_size:
@@ -176,7 +175,7 @@ class Parser:
         end_of_message = bytearray(EOM_BYTES*8)
         buf.readinto(end_of_message)
         EOM_obj = mblb.mblb_EOM(end_of_message)
-
+        
         self.__add_record(SOM_obj, EOM_obj)
         
         self._bytes_read += bytes_read + message_size + 16 + (EOM_BYTES*8)
@@ -256,7 +255,7 @@ class Parser:
             if progress_bar is not None:
                 progress_bar.update(self._bytes_read - last_read)
                 last_read = self._bytes_read
-
+            
             try:
                 msg_words, SOM_obj = self.read_message(stream)
             except:

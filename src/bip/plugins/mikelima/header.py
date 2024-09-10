@@ -1,5 +1,6 @@
 from io import RawIOBase
 import datetime
+import os
 from bip.non_vita import mblb
 
 def _SOM_search(b: bytes) -> int:
@@ -104,7 +105,7 @@ def read_first_header(stream: RawIOBase):
             buffer = stream.read(8)
             pass
     if buffer == bytes.fromhex('F07FFF7FFF7FFF7F'):
-        stream.seek(-8,1)
+        stream.seek(-8,os.SEEK_CUR)
         timestamp = Determine_timestamp(header)
         IQ_type, Session_id = Determine_IQ_and_Session(header)
         return len(header), orphan_packet_list, timestamp, IQ_type, Session_id
