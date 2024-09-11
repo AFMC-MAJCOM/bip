@@ -142,7 +142,7 @@ class Process_IQ0_Packet():
     def process_orphan_packet(self, packet: bytearray, SOP_obj):
         data = np.frombuffer(packet, 
                             offset=np.uint64(LANES*(MARKER_BYTES+PACKET_HEADER_BYTES)),
-                            count=np.uint64((SOP_obj.packet_size)/2), 
+                            count=np.uint64(SOP_obj.packet_size), 
                             dtype = np.int16).reshape((-1, 2))
         self.time = np.nan
         self.left_data = data[::2]
@@ -166,7 +166,7 @@ class Process_IQ0_Packet():
 
         data = np.frombuffer(stream, 
                             offset=np.uint64(LANES*(MARKER_BYTES+PACKET_HEADER_BYTES)),
-                            count=np.uint64((packet.packet_size)/2), 
+                            count=np.uint64(packet.packet_size), 
                             dtype = np.int16).reshape((-1, 2))
         self.left_data = data[::2]
         self.right_data = data[1::2]
