@@ -21,6 +21,7 @@ UNHANDLED_MARKERS = [bytes.fromhex('F37FFF7FFF7FFF7F'),
                     bytes.fromhex('F97FFF7FFF7FFF7F'),
                     bytes.fromhex('FA7FFF7FFF7FFF7F')]
 LANES = 3
+MARKER_BYTES = 8
 HEADER_BYTES = 32
 EOM_BYTES = 24
 
@@ -175,8 +176,7 @@ class Parser:
         end_of_message = bytearray(EOM_BYTES*8)
         buf.readinto(end_of_message)
         EOM_obj = mblb.mblb_EOM(end_of_message)
-        
-        
+
         self.__add_record(SOM_obj, EOM_obj)
         
         self._bytes_read += bytes_read + message_size + 16 + (EOM_BYTES*8)
@@ -256,8 +256,7 @@ class Parser:
             if progress_bar is not None:
                 progress_bar.update(self._bytes_read - last_read)
                 last_read = self._bytes_read
-            
-            
+
             try:
                 msg_words, SOM_obj = self.read_message(stream)
             except:
