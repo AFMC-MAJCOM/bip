@@ -10,7 +10,7 @@ from . IQ5_packet_data import Process_IQ5_Packet
 START_OF_PACKET = bytearray.fromhex('F17FFF7FFF7FFF7FF17FFF7FFF7FFF7FF17FFF7FFF7FFF7F')
 LANES = 3
 MARKER_BYTES = 8
-PACKET_HEADER_BYTES = 32
+HEADER_BYTES = 32
 MESSAGE_FILENAME="message_content"
 IQ0_PACKET_FILENAME="iq0_packet_content"
 IQ5_PACKET_FILENAME="iq5_packet_content"
@@ -103,7 +103,7 @@ class Process_Message:
             #SOP is 3 32-byte headers
             assert packet[0:(LANES*MARKER_BYTES)] == START_OF_PACKET
             #skip the start of packet
-            SOP = packet[(LANES*MARKER_BYTES):(LANES*(MARKER_BYTES+PACKET_HEADER_BYTES))]
+            SOP = packet[(LANES*MARKER_BYTES):(LANES*(MARKER_BYTES+HEADER_BYTES))]
             SOP_obj = mblb.mblb_Packet(SOP)
                 
             self.packet_processor.process_orphan_packet(packet, SOP_obj) # read individual packet
@@ -139,7 +139,7 @@ class Process_Message:
             packet = bytearray(packet)
             
             #SOP is 3 32-byte headers
-            SOP = packet[(LANES*MARKER_BYTES):(LANES*(MARKER_BYTES+PACKET_HEADER_BYTES))] #skip the start of packet
+            SOP = packet[(LANES*MARKER_BYTES):(LANES*(MARKER_BYTES+HEADER_BYTES))] #skip the start of packet
             SOP_obj = mblb.mblb_Packet(SOP)
                 
             self.packet_processor.process_packet(packet, SOP_obj, SOM_obj, count) # read individual packet
