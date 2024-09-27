@@ -5,11 +5,13 @@ class mblb_SOM:
 
     clocksPerUs = 160 #hardcoded, source unknown
 
-    def __init__(self, payload: bytes, timestamp: int, IQ_type: int, session_id: int):
+    def __init__(self, payload: bytes, timestamp: int, IQ_type: int, session_id: int, increment: int, timestamp_from_filename: int):
         self._payload = payload
         self._timestamp = timestamp
         self._IQ_type = IQ_type
         self._session_id = session_id
+        self._increment = increment
+        self._timestamp_from_filename = timestamp_from_filename
         self._words = np.frombuffer(self._payload, dtype=np.uint64)
         self._uuid = uuid.uuid4().hex
         
@@ -20,6 +22,14 @@ class mblb_SOM:
     @property
     def session_id(self) -> int:
         return self._session_id
+    
+    @property
+    def increment(self) -> int:
+        return self._increment
+    
+    @property
+    def timestamp_from_filename(self) -> int:
+        return self._timestamp_from_filename
         
     @property
     def lane1_ID(self) -> int:

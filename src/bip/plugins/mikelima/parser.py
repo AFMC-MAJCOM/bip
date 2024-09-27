@@ -23,7 +23,7 @@ UNHANDLED_MARKERS = [bytes.fromhex('F37FFF7FFF7FFF7F'),
 LANES = 3
 MARKER_BYTES = 8
 HEADER_BYTES = 32
-EOM_BYTES = 24
+EOM_BYTES = 22
 
 class Parser:
     options: dict
@@ -55,6 +55,8 @@ class Parser:
         self._timestamp = 0
         self._IQ_type = 0
         self._session_id = 0
+        self._increment = 0
+        self._timestamp_from_filename = 0
 
         self._closed = False  
         
@@ -113,7 +115,7 @@ class Parser:
                 self.message_recorder.close()
             return None
 
-        SOM_obj = mblb.mblb_SOM(header_data, self._timestamp, self._IQ_type, self._session_id)
+        SOM_obj = mblb.mblb_SOM(header_data, self._timestamp, self._IQ_type, self._session_id, self._increment, self._timestamp_from_filename)
         self._message_key = SOM_obj.message_key
 
         message = bytearray(8)
@@ -195,6 +197,8 @@ class Parser:
         self.message_recorder.add_record({
             "IQ_type": np.uint8(message.IQ_type),
             "session_id": np.uint8(message.session_id),
+            "increment": np.uint32(message.increment),
+            "timestamp_from_filename": np.uint64(message.timestamp_from_filename),
             "SOM_lane1_id": np.uint8(message.lane1_ID),
             "SOM_lane2_id": np.uint8(message.lane2_ID),
             "SOM_lane3_id": np.uint8(message.lane3_ID),
@@ -239,13 +243,13 @@ class Parser:
         if progress_bar is not None:
             last_read = 0
         
-        num_bytes_read, orphan_packet_list, self._timestamp, self._IQ_type, self._session_id = header.read_first_header(stream)
+        num_bytes_read, orphan_packet_list, self._timestamp, self._IQ_type, self._session_id, self._increment, self._timestamp_from_filename = header.read_first_header(stream)
         
         self.initialize_message_processor(self._IQ_type)
         
         self._bytes_read += num_bytes_read
         
-        orphan_packet_number = self.message_processor.process_orphan_packets(orphan_packet_list)
+        orphan_packet_number = self.message_processor.process_orphan_packets(orphan_packet_list, self._IQ_type, self._session_id, self._increment, self._timestamp_from_filename)
         
         msg_words, SOM_obj = self.read_message(stream) #bytearray of the whole message
         while msg_words:

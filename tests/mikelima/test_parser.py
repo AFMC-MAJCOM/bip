@@ -71,6 +71,8 @@ def test_read_message(fake_file):
     parser =  Parser(Path(), Path(), DummyWriter)
     IQ_type = 2
     session_id = 15
+    increment = 4
+    timestamp_from_filename = 19411207120000
     parser.initialize_message_processor(IQ_type)
     payload, SOM_obj = parser.read_message(fake_file)
     
@@ -89,7 +91,7 @@ def test_read_message(fake_file):
     fake_SOM_obj = d+e+f
     
     timestamp = 0
-    expected_SOM_obj = mb.mblb_SOM(fake_SOM_obj, timestamp, IQ_type, session_id)
+    expected_SOM_obj = mb.mblb_SOM(fake_SOM_obj, timestamp, IQ_type, session_id, increment, timestamp_from_filename)
     
     assert type(SOM_obj) == type(expected_SOM_obj)
     assert SOM_obj.freq_GHz == expected_SOM_obj.freq_GHz
@@ -100,6 +102,8 @@ def test_broken_message(fake_file_no_EOM):
     parser =  Parser(Path(), Path(), DummyWriter)
     IQ_type = 2
     session_id = 15
+    increment = 4
+    timestamp_from_filename = 19411207120000
     
     parser.initialize_message_processor(IQ_type)
     payload, SOM_obj = parser.read_message(fake_file_no_EOM)
@@ -119,7 +123,7 @@ def test_broken_message(fake_file_no_EOM):
     fake_SOM_obj = d+e+f
     
     timestamp = 0
-    expected_SOM_obj = mb.mblb_SOM(fake_SOM_obj, timestamp, IQ_type, session_id)
+    expected_SOM_obj = mb.mblb_SOM(fake_SOM_obj, timestamp, IQ_type, session_id, increment, timestamp_from_filename)
     
     assert type(SOM_obj) == type(expected_SOM_obj)
     assert SOM_obj.freq_GHz == expected_SOM_obj.freq_GHz
