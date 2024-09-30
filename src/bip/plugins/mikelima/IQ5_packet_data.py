@@ -10,7 +10,7 @@ LANES = 3
 MARKER_BYTES = 8
 HEADER_BYTES = 32
 
-_IQ0_packet_schema = [
+_IQ5_packet_schema = [
     ("IQ_type", pa.float32()),
     ("session_id", pa.uint8()),
     ("increment", pa.uint32()),
@@ -66,7 +66,7 @@ def _schema_elt(e: tuple) -> dict:
            "type": str(e[1]),
    } | unit
 
-IQ0_schema = [ _schema_elt(e) for e in _IQ0_packet_schema ]
+IQ5_schema = [ _schema_elt(e) for e in _IQ5_packet_schema ]
 
 class Process_IQ5_Packet():
     def __init__(self,
@@ -79,7 +79,7 @@ class Process_IQ5_Packet():
         
         self.packet_recorder = Recorder(
                 output_path,
-                schema=pa.schema([(e[0], e[1]) for e in _IQ0_packet_schema]),
+                schema=pa.schema([(e[0], e[1]) for e in _IQ5_packet_schema]),
                 options=recorder_opts,
                 batch_size=batch_size)
 
@@ -148,7 +148,7 @@ class Process_IQ5_Packet():
 
     @property
     def metadata(self) -> dict :
-        return self.packet_recorder.metadata | {"schema": IQ0_schema}
+        return self.packet_recorder.metadata | {"schema": IQ5_schema}
         
     def process_orphan_packet(self, packet: bytearray, SOP_obj, IQ_type: int, session_id: int, increment: int, timestamp_from_filename: int):
         data = np.frombuffer(packet, 
