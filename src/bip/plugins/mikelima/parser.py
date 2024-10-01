@@ -141,9 +141,9 @@ class Parser:
                 SOP_obj = mblb.mblb_Packet(packet_header[16:(16+(LANES*HEADER_BYTES))])
 
                 if self._IQ_type == 5:
-                    packet_size = SOM_obj.Dwell*(1280/(2**SOP_obj.Rx_config))*3
+                    packet_size = int(4*(SOM_obj.Dwell*(1280/(2**SOP_obj.Rx_config))*3))
                 else:
-                    packet_size = SOM_obj.Dwell*(1280/(2**SOP_obj.Rx_config))*2
+                    packet_size = int(4*(SOM_obj.Dwell*(1280/(2**SOP_obj.Rx_config))*2))
 
                 packet_data = bytearray(packet_size)
                 data_length = buf.readinto(packet_data)
