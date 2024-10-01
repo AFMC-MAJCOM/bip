@@ -139,9 +139,15 @@ class Parser:
                     self._bytes_read += bytes_read + message_size
                     return message[:-8], SOM_obj
                 SOP_obj = mblb.mblb_Packet(packet_header[16:(16+(LANES*HEADER_BYTES))])
-                packet_data = bytearray(SOP_obj.packet_size)
+
+                if self._IQ_type == 5:
+                    packet_size = SOM_obj.Dwell*(1280/(2**SOP_obj.Rx_config))*3
+                else:
+                    packet_size = SOM_obj.Dwell*(1280/(2**SOP_obj.Rx_config))*2
+
+                packet_data = bytearray(packet_size)
                 data_length = buf.readinto(packet_data)
-                if data_length != SOP_obj.packet_size:
+                if data_length != packet_size:
                     print('Message is broken in the packet data')
                     blank_end_of_message = bytearray(EOM_BYTES*8)
                     blank_EOM_obj = mblb.mblb_EOM(blank_end_of_message)
