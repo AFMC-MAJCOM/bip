@@ -5,6 +5,7 @@ import pyarrow as pa
 import numpy as np
 
 from bip.vita import ContextPacket
+from bip.common import bit_manipulation
 
 #TODO: 64 bit values seem to be packed backwards instead of
 #      [MSW, LSW] as called out in vita49.2 this looks like [LSW, MSW] at
@@ -174,7 +175,7 @@ class _ContextPacket(ContextPacket):
     
         tsi = self.integer_timestamp
         tsf0, tsf1 = self.fractional_timestamp
-        self.time = tsi + ((int(tsf1) << 32) + tsf0)*1e-12
+        self.time = bit_manipulation.time(tsi, tsf0, tsf1)
 
         self.cif0 = self.words[7]
         self.cif1 = self.words[8]

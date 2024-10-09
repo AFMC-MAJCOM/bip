@@ -13,16 +13,30 @@ from bip.recorder.dummy.dummywriter import DummyWriter
 
 
 @pytest.fixture
-def fake_packet():
+def fake_IQ0_packet():
     a = bytes.fromhex('F17FFF7FFF7FFF7FF17FFF7FFF7FFF7FF17FFF7FFF7FFF7F') #SOP Markers
     b = struct.pack("<QQQ", 0xEFBEEDFEADDEBAAB, 0x0000000000000000, 0x0000000000000000) #SOP Header word 1
     c = struct.pack("<QQQ", 0x000000608805BEAC, 0x0000000000000000, 0x0000000000000000) #SOP Header word 2
-    d = struct.pack("<QQQ", 0xAAF3065410013412, 0x0000000000000000, 0x0000000000000000) #SOP Header word 3
+    d = struct.pack("<QQQ", 0xAAF30654101F3412, 0x0000000000000000, 0x0000000000000000) #SOP Header word 3
     e = struct.pack("<QQQ", 0xECBA00E059EABAAF, 0x0000000000000000, 0x0000000000000000) #SOP Header word 4
     f = struct.pack("<QQQQ", 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D) #Data
     g = struct.pack("<QQQQ", 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D) #Data
-    h = struct.pack("<QQQQ", 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D) #Data
+    h = struct.pack("<QQ", 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D) #Data
     packet = bytearray(a+b+c+d+e+f+g+h)
+    yield packet
+
+@pytest.fixture
+def fake_IQ5_packet():
+    a = bytes.fromhex('F17FFF7FFF7FFF7FF17FFF7FFF7FFF7FF17FFF7FFF7FFF7F') #SOP Markers
+    b = struct.pack("<QQQ", 0xEFBEEDFEADDEBAAB, 0x0000000000000000, 0x0000000000000000) #SOP Header word 1
+    c = struct.pack("<QQQ", 0x000000608805BEAC, 0x0000000000000000, 0x0000000000000000) #SOP Header word 2
+    d = struct.pack("<QQQ", 0xAAF30654101F3412, 0x0000000000000000, 0x0000000000000000) #SOP Header word 3
+    e = struct.pack("<QQQ", 0xECBA00E059EABAAF, 0x0000000000000000, 0x0000000000000000) #SOP Header word 4
+    f = struct.pack("<QQQQ", 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D) #Data
+    g = struct.pack("<QQQQ", 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D) #Data
+    h = struct.pack("<QQQQ", 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D,0x0A0B0C0D0A0B0C0D) #Data
+    i = struct.pack("<QQQ", 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D) #Data
+    packet = bytearray(a+b+c+d+e+f+g+h+i)
     yield packet
 
 @pytest.fixture
@@ -30,11 +44,11 @@ def fake_packet_bad_event_id():
     a = bytes.fromhex('F17FFF7FFF7FFF7FF17FFF7FFF7FFF7FF17FFF7FFF7FFF7F') #SOP Markers
     b = struct.pack("<QQQ", 0xEFBEEDFEADDEBAAB, 0x0000000000000000, 0x0000000000000000) #SOP Header word 1
     c = struct.pack("<QQQ", 0x0000006088FFBEAC, 0x0000000000000000, 0x0000000000000000) #SOP Header word 2
-    d = struct.pack("<QQQ", 0xAAF3065410013412, 0x0000000000000000, 0x0000000000000000) #SOP Header word 3
+    d = struct.pack("<QQQ", 0xAAF30654101F3412, 0x0000000000000000, 0x0000000000000000) #SOP Header word 3
     e = struct.pack("<QQQ", 0xECBA00E059EABAAF, 0x0000000000000000, 0x0000000000000000) #SOP Header word 4
     f = struct.pack("<QQQQ", 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D) #Data
     g = struct.pack("<QQQQ", 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D) #Data
-    h = struct.pack("<QQQQ", 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D) #Data
+    h = struct.pack("<QQ", 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D) #Data
     packet = bytearray(a+b+c+d+e+f+g+h)
     yield packet
     
@@ -90,55 +104,59 @@ def fake_SOM():
     return content, f.getvalue()
 
 
-def test_process_IQ0_packet(fake_packet, fake_SOM):
-    SOP_obj = mblb_Packet(fake_packet[24:120])
+def test_process_IQ0_packet(fake_IQ0_packet, fake_SOM):
+    SOP_obj = mblb_Packet(fake_IQ0_packet[24:120])
     packet_processor =  Process_IQ0_Packet(Path(), DummyWriter)
     _ , payload = fake_SOM
     timestamp = 123456789
     IQ_type = 2
     packet_list_index = 4
     session_id = 15
-    SOM_obj = mb.mblb_SOM(payload, timestamp, IQ_type, session_id)
+    increment = 4
+    timestamp_from_filename = 19411207120000
+    SOM_obj = mb.mblb_SOM(payload, timestamp, IQ_type, session_id, increment, timestamp_from_filename)
     
-    packet_processor.process_packet(fake_packet, SOP_obj, SOM_obj, packet_list_index)
+    packet_processor.process_packet(fake_IQ0_packet, SOP_obj, SOM_obj, packet_list_index)
     
     assert packet_processor.time == 123456794
     
     assert np.array_equal(
             packet_processor.left_data[0],
             np.array([0x0c0d, 0x0a0b], dtype = np.int16))
-    assert len(packet_processor.left_data) == 12
+    assert len(packet_processor.left_data) == 10
     
     assert np.array_equal(
             packet_processor.right_data[0],
             np.array([0x0c0d, 0x0a0b], dtype = np.int16))
-    assert len(packet_processor.right_data) == 12
+    assert len(packet_processor.right_data) == 10
 
 
-def test_process_IQ5_packet(fake_packet, fake_SOM):
-    SOP_obj = mblb_Packet(fake_packet[24:120])
+def test_process_IQ5_packet(fake_IQ5_packet, fake_SOM):
+    SOP_obj = mblb_Packet(fake_IQ5_packet[24:120])
     packet_processor =  Process_IQ5_Packet(Path(), DummyWriter)
     _ , payload = fake_SOM
     timestamp = 123456789
     IQ_type = 5
     session_id = 15
-    SOM_obj = mb.mblb_SOM(payload, timestamp, IQ_type, session_id)
+    increment = 4
+    timestamp_from_filename = 19411207120000
+    SOM_obj = mb.mblb_SOM(payload, timestamp, IQ_type, session_id, increment, timestamp_from_filename)
 
-    packet_processor.process_packet(fake_packet, SOP_obj, SOM_obj, 4)
+    packet_processor.process_packet(fake_IQ5_packet, SOP_obj, SOM_obj, 4)
     
     assert packet_processor.time == 123456794
     
     assert np.array_equal(
             packet_processor.left_data[0],
             np.array([0x0c0d, 0x0a0b], dtype = np.int16))
-    assert len(packet_processor.left_data) == 8
+    assert len(packet_processor.left_data) == 10
     
     assert np.array_equal(
             packet_processor.right_data[0],
             np.array([0x0c0d, 0x0a0b], dtype = np.int16))
-    assert len(packet_processor.right_data) == 8
+    assert len(packet_processor.right_data) == 10
     
     assert np.array_equal(
             packet_processor.center_data[0],
             np.array([0x0c0d, 0x0a0b], dtype = np.int16))
-    assert len(packet_processor.center_data) == 8
+    assert len(packet_processor.center_data) == 10

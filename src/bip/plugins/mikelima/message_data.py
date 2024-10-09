@@ -18,6 +18,8 @@ IQ5_PACKET_FILENAME="iq5_packet_content"
 _message_schema = [
     ("IQ_type", pa.uint8()),
     ("session_id", pa.uint8()),
+    ("increment", pa.uint32()),
+    ("timestamp_from_filename", pa.uint64()),
     ("SOM_lane1_id", pa.uint8()),
     ("SOM_lane2_id", pa.uint8()),
     ("SOM_lane3_id", pa.uint8()),
@@ -95,7 +97,7 @@ class Process_Message:
                     options = recorder_opts,
                     batch_size = 10)
 
-    def process_orphan_packets(self, orphan_packet_list: list):
+    def process_orphan_packets(self, orphan_packet_list: list, IQ_type: int, session_id: int, increment: int, timestamp_from_filename: int):
         '''
         writes orphan data packets to the packet data parquet
         '''
@@ -106,7 +108,7 @@ class Process_Message:
             SOP = packet[(LANES*MARKER_BYTES):(LANES*(MARKER_BYTES+HEADER_BYTES))]
             SOP_obj = mblb.mblb_Packet(SOP)
                 
-            self.packet_processor.process_orphan_packet(packet, SOP_obj) # read individual packet
+            self.packet_processor.process_orphan_packet(packet, SOP_obj, IQ_type, session_id, increment, timestamp_from_filename) # read individual packet
         
         return len(orphan_packet_list)
 

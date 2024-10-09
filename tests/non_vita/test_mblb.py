@@ -115,7 +115,9 @@ def test_SOM(fake_SOM):
     timestamp = 123456789
     IQ_type = 5
     session_id = 15
-    mblb_SOM_obj = mb.mblb_SOM(payload, timestamp, IQ_type, session_id)
+    increment = 4
+    timestamp_from_filename = 19411207120000
+    mblb_SOM_obj = mb.mblb_SOM(payload, timestamp, IQ_type, session_id, increment, timestamp_from_filename)
     assert mblb_SOM_obj.IQ_type == 5
     assert mblb_SOM_obj.session_id == 15
     assert mblb_SOM_obj.lane1_ID == 0x0A

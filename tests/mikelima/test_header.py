@@ -116,7 +116,7 @@ def test_read_first_header():
     h.write(bytes.fromhex('F07FFF7FFF7FFF7F'))
     h.seek(0)
     
-    length, orphan_data, timestamp, IQ_type, session_id = read_first_header(h)
+    length, orphan_data, timestamp, IQ_type, session_id, increment, timestamp_from_filename = read_first_header(h)
     assert length == 32*7
     assert timestamp == 1698697125454677
     assert IQ_type == 0
@@ -142,7 +142,7 @@ def test_read_first_header_orphan_data():
     h.write(bytes.fromhex('F07FFF7FFF7FFF7F'))
     h.seek(0)
     
-    length, orphan_data, timestamp, IQ_type, session_id = read_first_header(h)
+    length, orphan_data, timestamp, IQ_type, session_id, increment, timestamp_from_filename = read_first_header(h)
     assert len(orphan_data) == 1
     assert length == ((32*7) + (36*8)) # 7 lines of 32 bytes at the top, 36 Q values of nonsense
     assert timestamp == 1698697125454677
@@ -157,6 +157,6 @@ def test_read_first_bad_header():
     h.write(bytes.fromhex('455F425F56315F4951305F303031392E62696E002F736973646174612F726169'))
     h.seek(0)
     with pytest.raises(RuntimeError):
-        length, timestamp, IQ_type, session_id = read_first_header(h)
+        length, timestamp, IQ_type, session_id, increment, timestamp_from_filename = read_first_header(h)
 
     
