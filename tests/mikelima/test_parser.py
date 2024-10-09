@@ -76,15 +76,15 @@ def test_read_message(fake_file):
     parser.initialize_message_processor(IQ_type)
     payload, SOM_obj = parser.read_message(fake_file)
     
-    expected_payload = bytearray(54*8)
     a = bytes.fromhex('F17FFF7FFF7FFF7FF17FFF7FFF7FFF7FF17FFF7FFF7FFF7F') #SOP Markers
     b = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SOP Header
     c = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #Data
-    d = bytes.fromhex('F17FFF7FFF7FFF7FF17FFF7FFF7FFF7FF17FFF7FFF7FFF7F') #SOP Markers
+    d = bytes.fromhex('F27FFF7FFF7FFF7FF27FFF7FFF7FFF7FF27FFF7FFF7FFF7F') #EOM Markers
     e = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SOP Header
     f = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #Data
     expected_payload = a+b+c+d+e+f
-    
+    expected_payload = bytearray(expected_payload)
+
     assert payload == expected_payload
 
     fake_SOM_obj = bytearray(36*8)
@@ -110,15 +110,15 @@ def test_broken_message(fake_file_no_EOM):
     
     parser.initialize_message_processor(IQ_type)
     payload, SOM_obj = parser.read_message(fake_file_no_EOM)
-    
-    expected_payload = bytearray(54*8)
+
     a = bytes.fromhex('F17FFF7FFF7FFF7FF17FFF7FFF7FFF7FF17FFF7FFF7FFF7F') #SOP Markers
-    b = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SOP Header
+    b = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 0x0000006000000000, 5, 6, 7, 8 , 9, 10, 11, 12) #SOP Header
     c = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #Data
     d = bytes.fromhex('F17FFF7FFF7FFF7FF17FFF7FFF7FFF7FF17FFF7FFF7FFF7F') #SOP Markers
-    e = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SOP Header
+    e = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 0x000000F000000000, 5, 6, 7, 8 , 9, 10, 11, 12) #SOP Header
     f = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #Data
     expected_payload = a+b+c+d+e+f
+    expected_payload = bytearray(expected_payload)
     
     assert payload == expected_payload
 

@@ -104,7 +104,7 @@ def test_cp_packet(simple_cp_packet):
 
     assert packet.integer_timestamp == 0xFFFF
 
-    assert packet.fractional_timestamp[0]== 0x10000000
+    assert packet.fractional_timestamp[0]== 0x00000001
     assert packet.fractional_timestamp[1] == 0
     assert packet.time == pytest.approx(65535.004294967296, 0.001)
     
