@@ -18,7 +18,7 @@ def simple_cp_packet():
         0x00000001, # 2 class id 0
         0x00010002, # 3 class id 1
         0x0000FFFF, # 4 tsi
-        0x10000000, # 5 tsf0
+        0x00000001, # 5 tsf0
         0x00000000, # 6 tsf1
         0b00111000101001000000000000001110, # 7 cif0
         0b11010011000000000000000000010000, # 8 cif1
@@ -104,7 +104,7 @@ def test_cp_packet(simple_cp_packet):
 
     assert packet.integer_timestamp == 0xFFFF
 
-    assert packet.fractional_timestamp[0]== 0x10000000
+    assert packet.fractional_timestamp[0]== 0x00000001
     assert packet.fractional_timestamp[1] == 0
     assert packet.time == pytest.approx(65535.004294967296, 0.001)
     

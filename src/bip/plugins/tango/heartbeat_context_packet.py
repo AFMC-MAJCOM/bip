@@ -5,6 +5,7 @@ import pyarrow as pa
 import numpy as np
 
 from bip.vita import ContextPacket
+from bip.common import bit_manipulation
 
 _schema = [
     ("packet_id", pa.uint32(),None),
@@ -119,7 +120,7 @@ class _HeartbeatContextPacket(ContextPacket):
 
         tsi = self.integer_timestamp
         tsf0, tsf1 = self.fractional_timestamp
-        self.time = tsi + ((tsf1 << 32) + tsf0)*1e-12
+        self.time = bit_manipulation.time(tsi, tsf0, tsf1)
 
         self.tx_buffer_free_0 = int(self.words[7])
         self.tx_buffer_free_1 = int(self.words[8])
