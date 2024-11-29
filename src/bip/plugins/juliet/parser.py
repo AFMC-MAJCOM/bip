@@ -100,10 +100,10 @@ class Parser:
             "filename": unknown_packets_filename,
         } | self.unknown_packets_recorder.metadata
 
-        signal_data_filename = f"{SIGNAL_DATA_FILENAME}.{Recorder.extension()}"
+        signal_data_filename = f"{SIGNAL_DATA_FILENAME}.{data_recorder.extension()}"
         self.signal_data = SignalData(
                 output_path / signal_data_filename,
-                Recorder,
+                data_recorder,
                 recorder_opts,
                 batch_size = 1000,
                 clean = self.clean)
