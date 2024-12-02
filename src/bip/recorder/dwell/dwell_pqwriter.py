@@ -117,7 +117,7 @@ class DwellPQWriter:
     def add_record(self, record: dict):
         # temporary for now, this will only work for Juliet.
         local_key = record["stream_id"]
-        
+
         if local_key != self._current_local_key:
             # This is sample data for a new dwell, so write out all the sample
             # data for the current dwell before starting on this one. 
@@ -144,6 +144,12 @@ class DwellPQWriter:
             )
 
             self._current_local_key = local_key
+            # Current packet is part of a new dwell, so we don't have to check time here.
+            self.last_packet_time = 0
+        
+        # make sure we get packets ordered in time within each dwell
+        assert record["time"] > self.last_packet_time
+        self.last_packet_time = record["time"]
 
         self.sample_data_i = np.concat([self.sample_data_i, record.pop("samples_i")])
         self.sample_data_q = np.concat([self.sample_data_q, record.pop("samples_q")])
@@ -158,7 +164,7 @@ class DwellPQWriter:
             return
         
         if self.current_index != 0:
-            self._record()
+            self._record(True)
 
         self.packet_writer.close()
         self.dwell_metadata_writer.close()
