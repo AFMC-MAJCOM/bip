@@ -29,7 +29,7 @@ _schema = [
 
     ("stream_id", pa.uint32()),
     ("sample_count", pa.uint32()),
-    ("trailer", pa.list_(pa.uint32(),-1)),
+    ("trailer", pa.list_(pa.uint32(), -1)),
 
     ("frame_index", pa.uint32()),
     ("packet_index", pa.uint32()),
