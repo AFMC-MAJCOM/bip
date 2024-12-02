@@ -117,7 +117,7 @@ class DwellPQWriter:
     def add_record(self, record: dict):
         # temporary for now, this will only work for Juliet.
         local_key = record["stream_id"]
-
+        
         if local_key != self._current_local_key:
             # This is sample data for a new dwell, so write out all the sample
             # data for the current dwell before starting on this one. 
