@@ -3,19 +3,9 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from ..parquet.pqwriter import PQWriter
+
 import numpy as np
-
-from dataclasses import dataclass
-
-class DwellFragment:
-    start_time : int
-    end_time : int
-    n_samples : int
-    data_key : int
-
-    samples_i : list[np.int16]
-    samples_q : list[np.int16]
-
 
 samples_schema = pa.schema([
     ("samples_i", pa.int16()),
@@ -42,32 +32,29 @@ class DwellPQWriter:
         self.batch_size = batch_size
         self.schema = schema
 
-        self.packet_data = []
+        self._dirname = filename.with_suffix("")
+        self._dirname.mkdir()
+
         self.sample_data_i = np.zeros(0, dtype=np.int16)
         self.sample_data_q = np.zeros(0, dtype=np.int16)
-        self.dwell_metadata = []
         self.written_keys = {}
         self.current_index = 0
-        self.packet_writer = None
         self.sample_writer = None
-        self.dwell_metadata_writer = None
+        self.packet_writer = PQWriter(
+            self._dirname / "packet_metadata.parquet",
+            options=self._options
+        )
+        self.dwell_metadata_writer = PQWriter(
+            self._dirname / "dwell_metadata.parquet",
+            options=self._options
+        )
+
         self.last_packet_time = 0
 
         self._current_local_key = None
         self._current_sample_file = None
 
-        self._dirname = filename.with_suffix("")
-        self._dirname.mkdir()
-        self._data_packet_filename = self._dirname / "packet_metadata.parquet"
-        self._dwell_metadata_filename = self._dirname / "samples_metadata.parquet"
-
     def _record(self, end_of_dwell:bool):
-        packet_df = pd.DataFrame(self.packet_data)
-        packet_table = pa.Table.from_pandas(packet_df)
-
-        dwell_df = pd.DataFrame(self.dwell_metadata)
-        dwell_table = pa.Table.from_pandas(dwell_df)
-
         samples_df = pd.DataFrame(
             {
                 "samples_i": self.sample_data_i,
@@ -76,28 +63,11 @@ class DwellPQWriter:
         )
         samples_table = pa.Table.from_pandas(samples_df)
         try:
-            if self.packet_writer == None and self.packet_data:
-                self.packet_writer = pq.ParquetWriter(
-                    self._data_packet_filename, 
-                    pa.Schema.from_pandas(packet_df)
-                )
-
-            if self.dwell_metadata_writer == None and self.dwell_metadata:
-                self.dwell_metadata_writer = pq.ParquetWriter(
-                    self._dwell_metadata_filename,
-                    pa.Schema.from_pandas(dwell_df)
-                )
-
             if self.sample_writer == None:
                 self.sample_writer = pq.ParquetWriter(
                     self._current_sample_file,
                     samples_schema
                 )
-
-            if self.packet_data:
-                self.packet_writer.write_table(packet_table)
-            if self.dwell_metadata:
-                self.dwell_metadata_writer.write_table(dwell_table)
             
             self.sample_writer.write_table(samples_table)
 
@@ -135,7 +105,8 @@ class DwellPQWriter:
                 self.written_keys[local_key] = times_key_written
 
             self._current_sample_file = self._dirname / f"{str(local_key)}-{suffix}.parquet"
-            self.dwell_metadata.append(
+
+            self.dwell_metadata_writer.add_record(
                 {
                     "local_key":local_key,
                     "filename":str(self._current_sample_file),
@@ -153,7 +124,7 @@ class DwellPQWriter:
 
         self.sample_data_i = np.concat([self.sample_data_i, record.pop("samples_i")])
         self.sample_data_q = np.concat([self.sample_data_q, record.pop("samples_q")])
-        self.packet_data.append(record)
+        self.packet_writer.add_record(record)
 
         self.current_index += 1
         if self.current_index == self.batch_size:

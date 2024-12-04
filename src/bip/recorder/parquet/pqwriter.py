@@ -13,10 +13,10 @@ class PQWriter:
 
     def __init__(self,
             filename: Path,
-            schema: pa.schema,
+            schema: pa.schema = None,
             options: dict = {},
             batch_size: int = 1000
-            ):
+        ):
 
         self._closed = False
 
@@ -37,6 +37,9 @@ class PQWriter:
     def _record(self):
         df = pd.DataFrame(self.data)
         table = pa.Table.from_pandas(df)
+        if not self.schema:
+            self.schema = pa.Schema.from_pandas(df)
+            
         try:
             if self.writer == None:
                 self.writer = pq.ParquetWriter(self._filename, self.schema, **self._options)

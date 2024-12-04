@@ -70,6 +70,9 @@ class Parser:
         self._unknown_packets = 0 
         self._closed = False  
 
+        if not data_recorder:
+            data_recorder = Recorder
+
         framing_data_filename = f"{FRAME_DATA_FILENAME}.{Recorder.extension()}"
         self.recorder = Recorder(
                 output_path / framing_data_filename,
