@@ -11,7 +11,7 @@ class DummyWriter:
 
     def __init__(self,
             filename: Path,
-            schema: pa.schema,
+            schema: pa.schema = None,
             options: dict = {},
             batch_size: int = 1000
             ):
