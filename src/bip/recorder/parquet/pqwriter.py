@@ -39,7 +39,7 @@ class PQWriter:
         table = pa.Table.from_pandas(df)
         if not self.schema:
             self.schema = pa.Schema.from_pandas(df)
-            
+
         try:
             if self.writer == None:
                 self.writer = pq.ParquetWriter(self._filename, self.schema, **self._options)
@@ -50,7 +50,7 @@ class PQWriter:
         self.data = []
         self.current_index = 0
 
-    def add_record(self, record: dict):
+    def add_record(self, record: dict, dwell_key: int = None):
         assert self.current_index < self.batch_size
         self.data.append(record)
         self.current_index += 1

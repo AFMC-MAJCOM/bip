@@ -10,7 +10,7 @@ from functools import reduce
 from bip.__version__ import __version__ as version
 from bip.parse import parse_bin
 from bip.recorder.parquet.pqwriter import PQWriter
-from bip.recorder.partitioned_parquet.partitioned_pqwriter import new_partitioned_parquet_writer
+from bip.recorder.partitioned_parquet.partitioned_pqwriter import PartitionedPQWriter
 from bip.recorder.dwell.dwell_pqwriter import DwellPQWriter
 import bip.plugins
 
@@ -136,18 +136,13 @@ def main():
     if args.compression is not None:
         recorder_opts["compression"] = args.compression.upper()
 
-    print(args.dwell_output)
-
     plugin = plugins[f"bip.plugins.{args.parser}"]
     data_recorder = (
-        new_partitioned_parquet_writer(['data_key']) 
-        if args.partition_data 
+        PartitionedPQWriter if args.partition_data 
         else DwellPQWriter if args.dwell_output
         else PQWriter
     )
     
-    print(data_recorder)
-
     log_level = getattr(logging, args.log_level.upper())
     
     try:

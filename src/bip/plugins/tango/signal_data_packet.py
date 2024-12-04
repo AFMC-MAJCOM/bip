@@ -35,9 +35,7 @@ _schema = [
     ("packet_index", pa.uint32()),
 
     ("samples_i", pa.list_(pa.int16(), -1)),
-    ("samples_q", pa.list_(pa.int16(), -1)),
-    
-    ("data_key", pa.string())
+    ("samples_q", pa.list_(pa.int16(), -1))
 ]
 
 def _schema_elt(e: tuple) -> dict:
@@ -80,7 +78,7 @@ class SignalData:
 
         self.recorder = Recorder(
                 output_path,
-                schema=pa.schema([(e[0], e[1]) for e in _schema]),
+                # schema=pa.schema([(e[0], e[1]) for e in _schema]),
                 options=recorder_opts,
                 batch_size=batch_size)
 
@@ -123,10 +121,8 @@ class SignalData:
             "packet_index": np.uint32(packet_index),
 
             "samples_i": packet.data[:,0],
-            "samples_q": packet.data[:,1],
-            
-            "data_key": packet.context_packet_key
-        })
+            "samples_q": packet.data[:,1]
+        }, dwell_key=packet.context_packet_key)
 
     def process(self,
             payload: bytes,

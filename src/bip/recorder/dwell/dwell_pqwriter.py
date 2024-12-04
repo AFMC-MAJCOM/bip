@@ -12,11 +12,13 @@ samples_schema = pa.schema([
     ("samples_q", pa.int16())
 ])
 
+
 class DwellPQWriter:
     @staticmethod
     def extension() -> str:
         return "parquet"
-    
+
+
     def __init__(self,
         filename:Path,
         schema: pa.schema,
@@ -54,6 +56,7 @@ class DwellPQWriter:
         self._current_local_key = None
         self._current_sample_file = None
 
+
     def _record(self, end_of_dwell:bool):
         samples_df = pd.DataFrame(
             {
@@ -84,9 +87,9 @@ class DwellPQWriter:
         self.sample_data_i = np.zeros(0, dtype=np.int16)
         self.sample_data_q = np.zeros(0, dtype=np.int16)
 
-    def add_record(self, record: dict):
-        # temporary for now, this will only work for Juliet.
-        local_key = record["stream_id"]
+
+    def add_record(self, record: dict, dwell_key: int = None):
+        local_key = dwell_key
 
         if local_key != self._current_local_key:
             # This is sample data for a new dwell, so write out all the sample
@@ -97,12 +100,13 @@ class DwellPQWriter:
             # write the rest of the data to a new file. 
             if not local_key in self.written_keys:
                 self.written_keys[local_key] = 0
-                suffix = "0"
+                times_key_written = 0
             else:
                 times_key_written = self.written_keys[local_key]
                 times_key_written += 1
-                suffix = str(times_key_written)
                 self.written_keys[local_key] = times_key_written
+
+            suffix = str(times_key_written)
 
             self._current_sample_file = self._dirname / f"{str(local_key)}-{suffix}.parquet"
 
@@ -130,6 +134,7 @@ class DwellPQWriter:
         if self.current_index == self.batch_size:
             self._record(False)
 
+
     def close(self):
         if self._closed:
             return
@@ -142,6 +147,7 @@ class DwellPQWriter:
 
         self._closed = True
 
+
     @property
     def metadata(self) -> dict:
         return  {
@@ -149,7 +155,8 @@ class DwellPQWriter:
             "options": self._options,
             "batch_size": self.batch_size
         }
-    
+
+
     def __del__(self):
         try:
             if not self._closed:
