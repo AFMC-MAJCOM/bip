@@ -2,6 +2,7 @@ from pathlib import Path
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+import heapq 
 
 from ..parquet.pqwriter import PQWriter
 
@@ -21,7 +22,7 @@ class DwellPQWriter:
 
     def __init__(self,
         filename:Path,
-        schema: pa.schema,
+        schema: pa.schema = None,
         options: dict = {},
         batch_size: int = 1000,
     ):
@@ -32,13 +33,14 @@ class DwellPQWriter:
         self._closed = False
 
         self.batch_size = batch_size
-        self.schema = schema
-
+        
         self._dirname = filename.with_suffix("")
         self._dirname.mkdir()
 
-        self.sample_data_i = np.zeros(0, dtype=np.int16)
-        self.sample_data_q = np.zeros(0, dtype=np.int16)
+        # self.sample_data_i = np.zeros(0, dtype=np.int16)
+        # self.sample_data_q = np.zeros(0, dtype=np.int16)
+        self.sample_data_i = []
+        self.sample_data_q = []
         self.written_keys = {}
         self.current_index = 0
         self.sample_writer = None
@@ -58,10 +60,17 @@ class DwellPQWriter:
 
 
     def _record(self, end_of_dwell:bool):
+        if self.sample_data_i:
+            samples_i_array = np.concatenate([ i for _, i in self.sample_data_i ])
+            samples_q_array = np.concatenate([ q for _, q in self.sample_data_q ])
+        else:
+            samples_i_array = np.zeros(0)
+            samples_q_array = np.zeros(0)
+            
         samples_df = pd.DataFrame(
             {
-                "samples_i": self.sample_data_i,
-                "samples_q": self.sample_data_q
+                "samples_i": samples_i_array,
+                "samples_q": samples_q_array
             }
         )
         samples_table = pa.Table.from_pandas(samples_df)
@@ -84,8 +93,8 @@ class DwellPQWriter:
         # clear out written data
         self.packet_data = []
         self.dwell_metadata = []
-        self.sample_data_i = np.zeros(0, dtype=np.int16)
-        self.sample_data_q = np.zeros(0, dtype=np.int16)
+        self.sample_data_i = []
+        self.sample_data_q = []
 
 
     def add_record(self, record: dict, dwell_key: int = None):
@@ -122,12 +131,10 @@ class DwellPQWriter:
             # Current packet is part of a new dwell, so we don't have to check time here.
             self.last_packet_time = 0
         
-        # make sure we get packets ordered in time within each dwell
-        assert record["time"] > self.last_packet_time
         self.last_packet_time = record["time"]
 
-        self.sample_data_i = np.concat([self.sample_data_i, record.pop("samples_i")])
-        self.sample_data_q = np.concat([self.sample_data_q, record.pop("samples_q")])
+        heapq.heappush(self.sample_data_i, (record["time"], record.pop("samples_i")))
+        heapq.heappush(self.sample_data_q, (record["time"], record.pop("samples_q")))
         self.packet_writer.add_record(record)
 
         self.current_index += 1
