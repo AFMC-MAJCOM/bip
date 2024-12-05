@@ -5,13 +5,16 @@ import pyarrow as pa
 import numpy as np
 import os
 
-
+BEAMS = 2
 LANES = 3
 MARKER_BYTES = 8
 HEADER_BYTES = 32
 
 _IQ0_packet_schema = [
     ("IQ_type", pa.float32()),
+    ("session_id", pa.uint8()),
+    ("increment", pa.uint32()),
+    ("timestamp_from_filename", pa.uint64()),
     ("packet_number", pa.uint16()),
     ("mode_tag", pa.uint16()),
     ("CI_number", pa.uint32()),
@@ -96,6 +99,9 @@ class Process_IQ0_Packet():
     
         self.packet_recorder.add_record({
             "IQ_type": np.float32(self.IQ_type),
+            "session_id": np.uint8(self.session_id),
+            "increment": np.uint32(self.increment),
+            "timestamp_from_filename": np.uint64(self.timestamp_from_filename),
             "packet_number": np.uint16(packet.packet_number),
             "mode_tag": np.uint16(packet.mode_tag),
             "CI_number": np.uint32(packet.CI_number),
@@ -109,7 +115,7 @@ class Process_IQ0_Packet():
             "CAGC": np.uint8(packet.CAGC),
             "Rx_beam_id": np.uint8(packet.Rx_beam_id),
             "Rx_config": np.uint8(packet.Rx_config),
-            "sample_rate": np.uint32(1280/(2**packet.Rx_config)),
+            "sample_rate": np.uint32(self.sample_rate),
             "channelizer_chan": np.uint16(packet.channelizer_chan),
             "DBF": np.uint8(packet.DBF),
             "routing_index": np.uint8(packet.routing_index),
@@ -139,15 +145,19 @@ class Process_IQ0_Packet():
     def metadata(self) -> dict :
         return self.packet_recorder.metadata | {"schema": IQ0_schema}
         
-    def process_orphan_packet(self, packet: bytearray, SOP_obj):
+    def process_orphan_packet(self, packet: bytearray, SOP_obj, IQ_type: int, session_id: int, increment: int, timestamp_from_filename: int):
         data = np.frombuffer(packet, 
                             offset=np.uint64(LANES*(MARKER_BYTES+HEADER_BYTES)),
-                            count=np.uint64((SOP_obj.packet_size)/2), 
+                            count=np.uint64((len(packet) - (LANES*(MARKER_BYTES+HEADER_BYTES)))/2), 
                             dtype = np.int16).reshape((-1, 2))
         self.time = np.nan
         self.left_data = data[::2]
         self.right_data = data[1::2]
-        self.IQ_type = np.nan
+        self.IQ_type = IQ_type
+        self.session_id = session_id
+        self.increment = increment - 1
+        self.timestamp_from_filename = timestamp_from_filename
+        self.sample_rate = 1280/(2**SOP_obj.Rx_config)
         self.AFS_mode = np.nan
         self.SchedNum = np.nan
         self.SIinSchedNum = np.nan
@@ -163,19 +173,22 @@ class Process_IQ0_Packet():
         we know that bytearray starts at SOP and ends 
         right before the next SOP or EOM
         '''
+        self.sample_rate = 1280/(2**packet.Rx_config)
 
         data = np.frombuffer(stream, 
                             offset=np.uint64(LANES*(MARKER_BYTES+HEADER_BYTES)),
-                            count=np.uint64((packet.packet_size)/2), 
+                            count=np.uint64(2*SOM_obj.Dwell*BEAMS*self.sample_rate), 
                             dtype = np.int16).reshape((-1, 2))
+
         self.left_data = data[::2]
         self.right_data = data[1::2]
         self.time = SOM_obj.Time_since_epoch_us + (packet_list_index * SOM_obj.Dwell)
         self.IQ_type = SOM_obj.IQ_type
+        self.session_id = SOM_obj.session_id
+        self.increment = SOM_obj.increment
+        self.timestamp_from_filename = SOM_obj.timestamp_from_filename
         self.AFS_mode = SOM_obj.AFS_mode
         self.SchedNum = SOM_obj.SchedNum
         self.SIinSchedNum = SOM_obj.SIinSchedNum
-
-        self.packet_id += 1
         
         self.__add_record(packet, self.left_data, self.right_data)

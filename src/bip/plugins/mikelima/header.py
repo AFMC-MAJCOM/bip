@@ -17,11 +17,14 @@ def _SOM_search(b: bytes) -> int:
         raise RuntimeError("start not found")
 
 
-def Determine_timestamp(header: bytearray):
+def Determine_timestamps(header: bytearray):
     '''
     This function is based on the mikelima bins that we have seen. If future 
     bins have a slightly different header formet then this will all break.
-	'''
+    '''
+
+    timestamp_from_header = str(header[136:150].decode("utf-8"))
+
     year = str(header[38:42].decode("utf-8"))
     julian_day = str(header[43:46].decode("utf-8"))
     h = int(header[47:49].decode("utf-8"))
@@ -40,9 +43,9 @@ def Determine_timestamp(header: bytearray):
     
     epoch = datetime.datetime.strptime(epoch_string,Time_Format).timestamp()
 
-    return int(epoch*(10**6))
+    return int(epoch*(10**6)), int(timestamp_from_header)
     
-def Determine_IQ_and_Session(header:bytearray):
+def Determine_IQ_Session_increment(header:bytearray):
     '''
     This function asuumes that the full file path of the bin file will appear
     in ascii at the start of the bin file.
@@ -52,14 +55,17 @@ def Determine_IQ_and_Session(header:bytearray):
     header_string = header.decode("ascii", 'ignore')
 
     header_string_parts = header_string.split('/')
+    filename_parts = header_string_parts[0].split("_")
     
     IQ = header_string_parts[5]
     Session = header_string_parts[4]
     
+    increment = filename_parts[5].split('.')
+
     assert IQ[0:2] == "IQ"
     assert Session[0:5] == "Sessn"
     
-    return int(IQ[2]), int(Session[5:8])
+    return int(IQ[2]), int(Session[5:8]), int(increment[0])
 
 def unpack_SOM(header_bytes: bytes, stream: RawIOBase):
     '''
@@ -105,9 +111,9 @@ def read_first_header(stream: RawIOBase):
             pass
     if buffer == bytes.fromhex('F07FFF7FFF7FFF7F'):
         stream.seek(-8,1)
-        timestamp = Determine_timestamp(header)
-        IQ_type, Session_id = Determine_IQ_and_Session(header)
-        return len(header), orphan_packet_list, timestamp, IQ_type, Session_id
+        timestamp, timestamp_from_filename = Determine_timestamps(header)
+        IQ_type, Session_id, increment = Determine_IQ_Session_increment(header)
+        return len(header), orphan_packet_list, timestamp, IQ_type, Session_id, increment, timestamp_from_filename
     else:
         raise RuntimeError("cannot find first message")
 

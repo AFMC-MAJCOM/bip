@@ -9,22 +9,6 @@ from bip.recorder.dummy.dummywriter import DummyWriter
 from bip.plugins.mikelima.message_data import Process_Message
 from bip.non_vita import mblb as mb
 
-
-@pytest.fixture
-def fake_message():
-    #fake_message = bytearray(147*8)
-    a = bytes.fromhex('F17FFF7FFF7FFF7FF17FFF7FFF7FFF7FF17FFF7FFF7FFF7F') #SOP Markers
-    b = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SOP Header
-    c = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #Data
-    d = bytes.fromhex('F17FFF7FFF7FFF7FF17FFF7FFF7FFF7FF17FFF7FFF7FFF7F') #SOP Markers
-    e = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SOP Header
-    f = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #Data
-    g = bytes.fromhex('F17FFF7FFF7FFF7FF17FFF7FFF7FFF7FF17FFF7FFF7FFF7F') #SOP Markers
-    h = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SOP Header
-    i = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #Data
-    fake_message = bytearray(a+b+c+d+e+f+g+h+i)
-    yield fake_message
-
 @pytest.fixture
 def fake_SOM():
     content = [
@@ -81,7 +65,7 @@ def fake_packet():
     a = bytes.fromhex('F17FFF7FFF7FFF7FF17FFF7FFF7FFF7FF17FFF7FFF7FFF7F') #SOP Markers
     b = struct.pack("<QQQ", 0xEFBEEDFEADDEBAAB, 0x0000000000000000, 0x0000000000000000) #SOP Header word 1
     c = struct.pack("<QQQ", 0x00000060889ABEAC, 0x0000000000000000, 0x0000000000000000) #SOP Header word 2
-    d = struct.pack("<QQQ", 0xAAF3065410013412, 0x0000000000000000, 0x0000000000000000) #SOP Header word 3
+    d = struct.pack("<QQQ", 0xAAF3065410513412, 0x0000000000000000, 0x0000000000000000) #SOP Header word 3
     e = struct.pack("<QQQ", 0xECBA00E059EABAAF, 0x0000000000000000, 0x0000000000000000) #SOP Header word 4
     f = struct.pack("<QQQQ", 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D) #Data
     g = struct.pack("<QQQQ", 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D) #Data
@@ -89,13 +73,19 @@ def fake_packet():
     packet = bytearray(a+b+c+d+e+f+g+h)
     yield packet
 
+@pytest.fixture
+def fake_message(fake_packet):
+    fake_message = fake_packet + fake_packet + fake_packet
+    yield fake_message
 
 def test_process_message(fake_message, fake_SOM):
     _ , payload = fake_SOM
     timestamp = 123456789
     IQ_type = 5
     session_id = 15
-    fake_SOM_obj = mb.mblb_SOM(payload, timestamp, IQ_type, session_id)
+    increment = 4
+    timestamp_from_filename = 19411207120000
+    fake_SOM_obj = mb.mblb_SOM(payload, timestamp, IQ_type, session_id, increment, timestamp_from_filename)
     
     message_processor =  Process_Message(Path(), DummyWriter, IQ_type = IQ_type)
     number_of_packets = message_processor.process_msg(fake_message, fake_SOM_obj)
@@ -103,25 +93,23 @@ def test_process_message(fake_message, fake_SOM):
     assert number_of_packets == 3
 
 
-def test_read_packets(fake_message):
+def test_read_packets(fake_message, fake_packet):
     message_processor =  Process_Message(Path(), DummyWriter)
     
     packet_list = message_processor.read_packets(fake_message)
-    
-    a = bytes.fromhex('F17FFF7FFF7FFF7FF17FFF7FFF7FFF7FF17FFF7FFF7FFF7F') #SOP Markers
-    b = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SOP Header
-    c = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #Data
-    expected_packet = bytearray(a + b + c)
-    
-    # = [expected_packet, expected_packet, expected_packet]
-    
+
     assert len(packet_list) == 3
-    assert list(packet_list[0]) == list(expected_packet)
+    assert list(packet_list[0]) == list(fake_packet)
     
 def test_read_orphan_packets(fake_packet):
+    IQ_type = 5
+    session_id = 15
+    increment = 4
+    timestamp_from_filename = 19411207120000
+    
     fake_packet_list = [fake_packet, fake_packet]
     message_processor =  Process_Message(Path(), DummyWriter)
     
-    orphan_packet_number = message_processor.process_orphan_packets(fake_packet_list)
+    orphan_packet_number = message_processor.process_orphan_packets(fake_packet_list, IQ_type, session_id, increment, timestamp_from_filename)
     
     assert orphan_packet_number == 2
