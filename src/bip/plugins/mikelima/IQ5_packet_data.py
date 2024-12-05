@@ -180,13 +180,10 @@ class Process_IQ5_Packet():
         right before the next SOP or EOM
         '''
         self.sample_rate = 1280/(2**packet.Rx_config)
-        print(len(stream))
-        print(2*SOM_obj.Dwell*BEAMS*self.sample_rate)
         data = np.frombuffer(stream, 
                             offset=np.uint64(LANES*(MARKER_BYTES+HEADER_BYTES)),
                             count=np.uint64(2*SOM_obj.Dwell*BEAMS*self.sample_rate), 
                             dtype = np.int16).reshape((-1, 2))
-        print(len(data))
         self.left_data = data[::3]
         self.right_data = data[1::3]
         self.center_data = data[2::3]

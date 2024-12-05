@@ -8,7 +8,7 @@ def _SOM_search(b: bytes) -> int:
     exceptions raised are passed in read_SOM
     '''
     if len(b) == 0:
-        return None
+        raise RuntimeError("start not found")
     elif len(b) != 8:
         raise RuntimeError(f"incomplete read of SOM header")
     if b == bytes.fromhex('F07FFF7FFF7FFF7F'):
@@ -75,7 +75,7 @@ def unpack_SOM(header_bytes: bytes, stream: RawIOBase):
     buffer = stream.read(16)
     if buffer != bytes.fromhex('F07FFF7FFF7FFF7FF07FFF7FFF7FFF7F'):
         raise RuntimeError("unexpected SOM format")
-        
+
     # 3 lanes of 4 words plus 24 SDW is 36 8-byte words
     bytes_out = bytearray(36*8)
     
