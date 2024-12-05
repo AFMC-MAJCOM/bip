@@ -135,6 +135,7 @@ class DwellPQWriter:
             self._current_local_key = local_key
             self.last_packet_time = 0
         
+        record["local_key"] = dwell_key
         self.last_packet_time = record["time"]
 
         heapq.heappush(self.sample_data_i, (record["time"], record.pop("samples_i")))
