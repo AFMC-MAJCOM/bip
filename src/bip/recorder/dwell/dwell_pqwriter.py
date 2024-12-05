@@ -7,6 +7,7 @@ import heapq
 from ..parquet.pqwriter import PQWriter
 
 import numpy as np
+import traceback
 
 samples_schema = pa.schema([
     ("samples_i", pa.int16()),
@@ -35,7 +36,7 @@ class DwellPQWriter:
         self.batch_size = batch_size
         
         self._dirname = filename.with_suffix("")
-        self._dirname.mkdir()
+        self._dirname.mkdir(exist_ok=True)
 
         self.sample_data_i = []
         self.sample_data_q = []
@@ -53,7 +54,7 @@ class DwellPQWriter:
 
         self.last_packet_time = 0
 
-        self._current_local_key = None
+        self._current_local_key = -1
         self._current_sample_file = None
 
 
@@ -62,8 +63,8 @@ class DwellPQWriter:
             samples_i_array = np.concatenate([ i for _, i in self.sample_data_i ])
             samples_q_array = np.concatenate([ q for _, q in self.sample_data_q ])
         else:
-            samples_i_array = np.zeros(0)
-            samples_q_array = np.zeros(0)
+            samples_i_array = np.zeros(0, dtype=np.int16)
+            samples_q_array = np.zeros(0, dtype=np.int16)
             
         samples_df = pd.DataFrame(
             {
@@ -74,6 +75,7 @@ class DwellPQWriter:
         samples_table = pa.Table.from_pandas(samples_df)
         try:
             if self.sample_writer == None:
+                print(self._current_sample_file)
                 self.sample_writer = pq.ParquetWriter(
                     self._current_sample_file,
                     samples_schema
@@ -86,6 +88,7 @@ class DwellPQWriter:
                 self.sample_writer = None
 
         except Exception as e:
+            traceback.print_exc()
             print(f"Error writing to file: {e}, {self._dirname}")
 
         # clear out written data
@@ -99,9 +102,10 @@ class DwellPQWriter:
         local_key = dwell_key
 
         if local_key != self._current_local_key:
-            # This is sample data for a new dwell, so write out all the sample
-            # data for the current dwell before starting on this one. 
-            self._record(True)
+            if self._current_local_key != -1:
+                # This is sample data for a new dwell, so write out all the sample
+                # data for the current dwell before starting on this one. 
+                self._record(True)
 
             # If we've written data for this local key before, then we'll have to 
             # write the rest of the data to a new file. 
@@ -117,16 +121,18 @@ class DwellPQWriter:
 
             self._current_sample_file = self._dirname / f"{str(local_key)}-{suffix}.parquet"
 
+            # mikelima compatibility
+            first_packet_index = record["packet_id"] if "packet_id" in record else record["packet_number"]
+
             self.dwell_metadata_writer.add_record(
                 {
                     "local_key":local_key,
                     "filename":str(self._current_sample_file),
-                    "first_packet_index": record["packet_id"]
+                    "first_packet_index": first_packet_index
                 }
             )
 
             self._current_local_key = local_key
-            # Current packet is part of a new dwell, so we don't have to check time here.
             self.last_packet_time = 0
         
         self.last_packet_time = record["time"]

@@ -12,6 +12,7 @@ from bip.parse import parse_bin
 from bip.recorder.parquet.pqwriter import PQWriter
 from bip.recorder.partitioned_parquet.partitioned_pqwriter import PartitionedPQWriter
 from bip.recorder.dwell.dwell_pqwriter import DwellPQWriter
+from bip.recorder.dwell.mikelima_dwell_pqwriter import MikelimaDwellPQWriter
 import bip.plugins
 
 
@@ -139,6 +140,7 @@ def main():
     plugin = plugins[f"bip.plugins.{args.parser}"]
     data_recorder = (
         PartitionedPQWriter if args.partition_data 
+        else MikelimaDwellPQWriter if args.parser == "mikelima" and args.dwell_output
         else DwellPQWriter if args.dwell_output
         else PQWriter
     )

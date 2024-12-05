@@ -12,6 +12,7 @@ from . import header
 from . message_data import Process_Message
 from . import message_data
 from bip.non_vita import mblb
+import traceback
 
 MESSAGE_FILENAME="message_content"
 PACKET_FILENAME="packet_content"
@@ -61,7 +62,9 @@ class Parser:
         self._closed = False  
         
         if not data_recorder:
-            data_recorder = Recorder
+            self.data_recorder = Recorder
+        else:
+            self.data_recorder = data_recorder
 
     @property
     def metadata(self) -> dict:
@@ -89,7 +92,7 @@ class Parser:
         
         self.message_processor = Process_Message(
                 self._output_path,
-                self._recorder,
+                self.data_recorder,
                 options = self._recorder_options,
                 batch_size = 10,
                 IQ_type = IQ_type)
@@ -270,5 +273,6 @@ class Parser:
             try:
                 msg_words, SOM_obj = self.read_message(stream)
             except:
+                traceback.print_exc()
                 msg_words = None
       

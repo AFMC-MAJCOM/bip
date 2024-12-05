@@ -38,23 +38,26 @@ class MikelimaDwellPQWriter:
         self.written_keys = {}
         
         self.sample_writer_left = DwellPQWriter(
-            self._dirname / "data_left",
+            self._dirname / "data",
             options=self._options,
-            schema=schema,
+            # schema=schema,
             batch_size=batch_size
         )
         self.sample_writer_right = DwellPQWriter(
-            self._dirname / "data_right",
+            self._dirname / "data",
             options=self._options,
-            schema=schema,
+            # schema=schema,
             batch_size=batch_size
         )
         self.sample_writer_center = DwellPQWriter(
-            self._dirname / "data_center",
+            self._dirname / "data",
             options=self._options,
-            schema=schema,
+            # schema=schema,
             batch_size=batch_size
         )
+
+        self.batch_size = batch_size
+        self.record_count = 0
 
 
     def extract_sample_type(record, samples_mapping, unused_keys):
@@ -88,11 +91,10 @@ class MikelimaDwellPQWriter:
             "samples_q_center": "samples_q" 
         }
 
-        # trust me, this works
-        dwell_key_total = record["packet_number"] * 3
-        dwell_key_left = dwell_key_total
-        dwell_key_right = dwell_key_total + 1
-        dwell_key_center = dwell_key_total + 2
+        # this works, trust me
+        dwell_key_left = self.record_count * 3
+        dwell_key_right = self.record_count * 3 + 1
+        dwell_key_center = self.record_count * 3 + 2
         
         left_record = MikelimaDwellPQWriter.extract_sample_type(
             record,
@@ -115,6 +117,8 @@ class MikelimaDwellPQWriter:
                 list(left_samples_map.keys()) + list(left_samples_map.keys()),
             )
             self.sample_writer_center.add_record(center_record, dwell_key=dwell_key_center)
+
+        self.record_count += 1
 
 
     def close(self):
