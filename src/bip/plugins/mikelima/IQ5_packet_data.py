@@ -181,5 +181,7 @@ class Process_IQ5_Packet():
         self.AFS_mode = SOM_obj.AFS_mode
         self.SchedNum = SOM_obj.SchedNum
         self.SIinSchedNum = SOM_obj.SIinSchedNum
+
+        self.packet_id += 1
             
         self.__add_record(packet, self.left_data, self.right_data, self.center_data)

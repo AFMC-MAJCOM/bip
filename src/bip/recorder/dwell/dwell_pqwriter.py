@@ -37,8 +37,6 @@ class DwellPQWriter:
         self._dirname = filename.with_suffix("")
         self._dirname.mkdir()
 
-        # self.sample_data_i = np.zeros(0, dtype=np.int16)
-        # self.sample_data_q = np.zeros(0, dtype=np.int16)
         self.sample_data_i = []
         self.sample_data_q = []
         self.written_keys = {}
