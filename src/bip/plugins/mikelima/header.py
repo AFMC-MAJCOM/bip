@@ -8,7 +8,7 @@ def _SOM_search(b: bytes) -> int:
     exceptions raised are passed in read_SOM
     '''
     if len(b) == 0:
-        raise RuntimeError("start not found")
+        return None
     elif len(b) != 8:
         raise RuntimeError(f"incomplete read of SOM header")
     if b == bytes.fromhex('F07FFF7FFF7FFF7F'):
