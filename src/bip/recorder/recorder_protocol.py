@@ -7,7 +7,7 @@ import pyarrow as pa
 class Recorder(Protocol):
     def __init__(self,
             filename: Path,
-            schema: pa.Schema,
+            schema: pa.Schema=None,
             options: dict = {}
             ):
         pass
@@ -20,7 +20,7 @@ class Recorder(Protocol):
     def metadata(self) -> dict:
         pass
 
-    def add_record(self, record: dict):
+    def add_record(self, record: dict, dwell_key: int = None):
         pass
 
     def close(self):
