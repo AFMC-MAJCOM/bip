@@ -76,7 +76,7 @@ class Process_IQ5_Packet():
             batch_size: int = 10,
             **kwargs):
         self.options = kwargs
-        
+
         self.packet_recorder = Recorder(
                 output_path,
                 schema=pa.schema([(e[0], e[1]) for e in _IQ5_packet_schema]),
@@ -99,7 +99,7 @@ class Process_IQ5_Packet():
         Add a row to the packet_content parquet
         '''
         assert isinstance(packet, mblb.mblb_Packet)
-    
+
         self.packet_recorder.add_record({
             "IQ_type": np.float32(self.IQ_type),
             "session_id": np.uint8(self.session_id),
@@ -132,7 +132,7 @@ class Process_IQ5_Packet():
             "DV": np.uint8(packet.DV),
             "RS": np.uint8(packet.RS),
             "valid_channels_beams": np.uint8(packet.valid_channels_beams),
-            "channels_beams_per_subpath": 
+            "channels_beams_per_subpath":
                 np.uint8(packet.channels_beams_per_subpath),
             "AFS_mode": np.float32(self.AFS_mode),
             "SchedNum": np.float32(self.SchedNum),
@@ -149,11 +149,11 @@ class Process_IQ5_Packet():
     @property
     def metadata(self) -> dict :
         return self.packet_recorder.metadata | {"schema": IQ5_schema}
-        
+
     def process_orphan_packet(self, packet: bytearray, SOP_obj, IQ_type: int, session_id: int, increment: int, timestamp_from_filename: int):
-        data = np.frombuffer(packet, 
+        data = np.frombuffer(packet,
                             offset=np.uint64(LANES*(MARKER_BYTES+HEADER_BYTES)),
-                            count=np.uint64((len(packet) - (LANES*(MARKER_BYTES+HEADER_BYTES)))/2), 
+                            count=np.uint64((len(packet) - (LANES*(MARKER_BYTES+HEADER_BYTES)))/2),
                             dtype = np.int16).reshape((-1, 2))
         self.time = np.nan
         self.left_data = data[::3]
@@ -171,20 +171,19 @@ class Process_IQ5_Packet():
 
     def process_packet(self, stream: bytearray, packet, SOM_obj, packet_list_index):
         '''
-        the packet is passed in, now we stream the data (I/Q) into a 
+        the packet is passed in, now we stream the data (I/Q) into a
         1 dimensional array of 2 values per element (I/Q)
         The format in the word is IB QB IA QA, laid out across 64 bits with
-        B the later sample and A being the earlier sample.  
-        
-        we know that bytearray starts at SOP and ends 
+        B the later sample and A being the earlier sample.
+
+        we know that bytearray starts at SOP and ends
         right before the next SOP or EOM
         '''
         self.sample_rate = 1280/(2**packet.Rx_config)
-        data = np.frombuffer(stream, 
+        data = np.frombuffer(stream,
                             offset=np.uint64(LANES*(MARKER_BYTES+HEADER_BYTES)),
-                            count=np.uint64(2*SOM_obj.Dwell*BEAMS*self.sample_rate), 
+                            count=np.uint64(2*SOM_obj.Dwell*BEAMS*self.sample_rate),
                             dtype = np.int16).reshape((-1, 2))
-
         self.left_data = data[::3]
         self.right_data = data[1::3]
         self.center_data = data[2::3]
@@ -196,5 +195,5 @@ class Process_IQ5_Packet():
         self.AFS_mode = SOM_obj.AFS_mode
         self.SchedNum = SOM_obj.SchedNum
         self.SIinSchedNum = SOM_obj.SIinSchedNum
-        
+
         self.__add_record(packet, self.left_data, self.right_data, self.center_data)

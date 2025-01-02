@@ -24,7 +24,8 @@ UNHANDLED_MARKERS = [bytes.fromhex('F37FFF7FFF7FFF7F'),
 LANES = 3
 MARKER_BYTES = 8
 HEADER_BYTES = 32
-EOM_BYTES = 22
+IQ0_EOM_BYTES = 22
+IQ5_EOM_BYTES = 21
 
 class Parser:
     options: dict
@@ -58,7 +59,8 @@ class Parser:
         self._session_id = 0
         self._increment = 0
         self._timestamp_from_filename = 0
-
+        
+        self._EOM_length = IQ0_EOM_BYTES
         self._closed = False  
         
         if not data_recorder:
@@ -152,7 +154,7 @@ class Parser:
                 data_length = buf.readinto(packet_data)
                 if data_length != packet_size:
                     print('Message is broken in the packet data')
-                    blank_end_of_message = bytearray(EOM_BYTES*8)
+                    blank_end_of_message = bytearray(self._EOM_length*8)
                     blank_EOM_obj = mblb.mblb_EOM(blank_end_of_message)
                     self.__add_record(SOM_obj, blank_EOM_obj)
         
@@ -169,7 +171,7 @@ class Parser:
                 raise Exception('This Bin file contains unhandled markers')
             if additional_message_length != 8:
                 print('Message is broken no EOM found')
-                blank_end_of_message = bytearray(EOM_BYTES*8)
+                blank_end_of_message = bytearray(self._EOM_length*8)
                 blank_EOM_obj = mblb.mblb_EOM(blank_end_of_message)
                 self.__add_record(SOM_obj, blank_EOM_obj)
         
@@ -184,13 +186,13 @@ class Parser:
         buf.readinto(EOM_marker)
         assert EOM_marker == bytes.fromhex('F27FFF7FFF7FFF7FF27FFF7FFF7FFF7F')
         #EOM is 24 8-byte WORDS
-        end_of_message = bytearray(EOM_BYTES*8)
+        end_of_message = bytearray(self._EOM_length*8)
         buf.readinto(end_of_message)
         EOM_obj = mblb.mblb_EOM(end_of_message)
 
         self.__add_record(SOM_obj, EOM_obj)
         
-        self._bytes_read += bytes_read + message_size + 16 + (EOM_BYTES*8)
+        self._bytes_read += bytes_read + message_size + 16 + (self._EOM_length*8)
         return message[:-8], SOM_obj
     
     def __add_record(self,
@@ -254,6 +256,9 @@ class Parser:
         
         num_bytes_read, orphan_packet_list, self._timestamp, self._IQ_type, self._session_id, self._increment, self._timestamp_from_filename = header.read_first_header(stream)
         
+        if self._IQ_type == 5:
+            self._EOM_length = IQ5_EOM_BYTES
+
         self.initialize_message_processor(self._IQ_type)
         
         self._bytes_read += num_bytes_read
