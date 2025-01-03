@@ -19,15 +19,15 @@ def add_packet_trailer(bin_file):
 
 def add_random_data_packet(bin_file):
     add_packet_header(bin_file)
-    packet_size = 64767
+    packet_size = 65535
     packet_id = random.randint(7000, 8000)
     bin_file.write(struct.pack('H',packet_size))
     bin_file.write(struct.pack('H',packet_id))
     stream_id = random.randint(11,21)
     bin_file.write(struct.pack('<I',stream_id))
-    class_id_0 = 16777215
+    class_id_0 = 0x00AAAAAA
     bin_file.write(struct.pack('<I',class_id_0))
-    class_id_1 = 65537
+    class_id_1 = 0X04000D00
     bin_file.write(struct.pack('<I',class_id_1))
     tsi = random.randint(1690000000, 1700000000)
     bin_file.write(struct.pack('<I',tsi))
@@ -62,7 +62,7 @@ def add_random_context_packet(bin_file):
                                     01: Sample Count
                                     10: picoseconds
                                     11: frequency running
-    19:16   packet_count    0-15    The number of data packets following this context packet
+    19:16   packet_count    0-15    Incrementing value for number of context packets in a set
     15:0    packet_size     32      The size of this packet. 32 words
     '''
     header = 0b01111000111000010000000000100000
@@ -283,6 +283,9 @@ def add_random_context_packet(bin_file):
     Sample Rate is measured in Hz'''
     sample_rate = 80
     bin_file.write(struct.pack('<Q',sample_rate))
+
+    data_format = 900
+    bin_file.write(struct.pack('<Q',data_format))
     '''
     Notes on Polarization
     Polarization 31:16 are ellipse tilt angle
