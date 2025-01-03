@@ -122,9 +122,6 @@ class DwellPQWriter:
 
             self._current_sample_file = self._dirname / f"{str(local_key)}-{suffix}.parquet"
 
-            # mikelima compatibility
-            # first_packet_index = record["packet_id"] if "packet_id" in record else record["packet_number"]
-
             self.dwell_metadata_writer.add_record(
                 {
                     "local_key":local_key,
