@@ -37,17 +37,7 @@ class MikelimaDwellPQWriter:
 
         self.written_keys = {}
 
-        self.sample_writer_left = DwellPQWriter(
-            self._dirname / "data",
-            options=self._options,
-            batch_size=batch_size
-        )
-        self.sample_writer_right = DwellPQWriter(
-            self._dirname / "data",
-            options=self._options,
-            batch_size=batch_size
-        )
-        self.sample_writer_center = DwellPQWriter(
+        self.sample_writer_inner = DwellPQWriter(
             self._dirname / "data",
             options=self._options,
             batch_size=batch_size
@@ -107,8 +97,8 @@ class MikelimaDwellPQWriter:
         )
         right_record["polarization"] = "right"
 
-        self.sample_writer_left.add_record(left_record, dwell_key=dwell_key_left)
-        self.sample_writer_right.add_record(right_record, dwell_key=dwell_key_right)
+        self.sample_writer_inner.add_record(left_record, dwell_key=dwell_key_left)
+        self.sample_writer_inner.add_record(right_record, dwell_key=dwell_key_right)
 
         if "samples_i_center" in record:
             center_record = MikelimaDwellPQWriter.extract_sample_type(
@@ -118,7 +108,7 @@ class MikelimaDwellPQWriter:
             )
             center_record["polarization"] = "center"
 
-            self.sample_writer_center.add_record(center_record, dwell_key=dwell_key_center)
+            self.sample_writer_inner.add_record(center_record, dwell_key=dwell_key_center)
 
         self.record_count += 1
 
@@ -127,9 +117,7 @@ class MikelimaDwellPQWriter:
         if self._closed:
             return
 
-        self.sample_writer_left.close()
-        self.sample_writer_right.close()
-        self.sample_writer_center.close()
+        self.sample_writer_inner.close()
 
         self._closed = True
 
