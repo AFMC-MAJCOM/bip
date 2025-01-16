@@ -125,7 +125,7 @@ class DwellPQWriter:
             self.dwell_metadata_writer.add_record(
                 {
                     "local_key":local_key,
-                    "filename":str(self._current_sample_file),
+                    "filename":self._current_sample_file.name,
                     "first_record_index": self.records_counted
                 }
             )
