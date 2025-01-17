@@ -29,7 +29,7 @@ class PQWriter:
         self.data = []
         self.writer = None
         self.current_index = 0
-        
+
         # terrible, horrible, no good, very bad hack.
         if "partition_cols" in self._options:
             del self._options['partition_cols']
