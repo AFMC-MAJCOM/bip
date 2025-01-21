@@ -17,12 +17,34 @@ def add_packet_trailer(bin_file):
     bin_file.write('E'.encode('utf-8'))
     bin_file.write('V'.encode('utf-8'))
 
-def add_random_data_packet(bin_file):
+def add_random_data_packet(bin_file, packet_count):
     add_packet_header(bin_file)
+    '''
+    Header Definition:
+    bits;   name;           value;  description;
+    31:28   packet_type     0b0000  Signal Data Packet Type
+    27      cbit            1       Class ID is included in the packet
+    26      isAck           0       This is not an Acknowledge packet
+    25      reserved        0
+    24      isCancellation  0       This is not a Calcellation packet
+    23:22   tsi             11      Integer Timestamp definition 
+                                    00: Not included
+                                    01: UTC time
+                                    10 GPS time
+                                    11: other (Base Set uses the custom epoch like Juliet)
+    21:20   tsf             10      Fractional Timestamp definition
+                                    00: Not included
+                                    01: Sample Count
+                                    10: picoseconds
+                                    11: frequency running
+    19:16   packet_count    0-15    Incrementing value for number of context packets in a set
+    15:0    packet_size     32      The size of this packet. 32 words
+    '''
+    header_start = 0b000010001110
+    header = bin(int(str(header_start)[2:])+ str(bin(packet_count))[2:].zfill(4))
     packet_size = 64767
-    packet_id = random.randint(7000, 8000)
+    bin_file.write(struct.pack('H',header))
     bin_file.write(struct.pack('H',packet_size))
-    bin_file.write(struct.pack('H',packet_id))
     stream_id = random.randint(11,21)
     bin_file.write(struct.pack('<I',stream_id))
     class_id_0 = 16777215
@@ -42,13 +64,36 @@ def add_random_data_packet(bin_file):
     
     add_packet_trailer(bin_file)
 
-def add_random_context_packet(bin_file):
+def add_random_context_packet(bin_file, packet_count):
     add_packet_header(bin_file)
-    
+    '''
+    Header Definition:
+    bits;   name;           value;  description;
+    31:28   packet_type     0b0101   Extension Command Packet Type
+    27      cbit            1       Class ID is included in the packet
+    26      isAck           0       This is not an Acknowledge packet
+    25      reserved        0
+    24      isCancellation  0       This is not a Calcellation packet
+    23:22   tsi             11      Integer Timestamp definition 
+                                    00: Not included
+                                    01: UTC time
+                                    10 GPS time
+                                    11: other (Base Set uses the custom epoch like Juliet)
+    21:20   tsf             10      Fractional Timestamp definition
+                                    00: Not included
+                                    01: Sample Count
+                                    10: picoseconds
+                                    11: frequency running
+    19:16   packet_count    0-15    Incrementing value for number of context packets in a set
+    15:0    packet_size     32      The size of this packet. 32 words
+    '''
+    header_start = 0b010110001110
     packet_size = 64767
-    packet_id = random.randint(7000, 8000)
+    header = bin(int(str(header_start)[2:])+ str(bin(packet_count))[2:].zfill(4))
+
+    bin_file.write(struct.pack('<H',header))
     bin_file.write(struct.pack('<H',packet_size))
-    bin_file.write(struct.pack('<H',packet_id))
+    
     stream_id = random.randint(11,21)
     bin_file.write(struct.pack('<I',stream_id))
     class_id_0 = 16777215
@@ -137,10 +182,10 @@ def main():
     
     with open(file_name, 'wb') as bin_file:
         for i in range(10):
-            add_random_context_packet(bin_file)
+            add_random_context_packet(bin_file, i)
 
             for j in range(400):
-                add_random_data_packet(bin_file)
+                add_random_data_packet(bin_file, j%15)
 
 if __name__ == "__main__":
     main()

@@ -187,7 +187,7 @@ def add_random_context_packet(bin_file):
     9 gpsascii              0   GPS in ASCII is not included in this packet
     8 contextpacketassoclists   0   Context Packet Association Lists are not included in this packet
     7 cif7enable    0   CIF7 is not included in this packet
-    6:5 reserved    0
+    6:5 reserved    00
     4   cif4enable  1   CIF4 is included in this packet
     3   cif3enable  1   CIF3 is included in this packet
     2   cif2enable  1   CIF2 is included in this packet
@@ -206,7 +206,7 @@ def add_random_context_packet(bin_file):
     26  spacialreftype      0   Spacial Reference Type is not included in this packet
     25  beamwidth           1   Beam Width is incuded in this packet
     24  range               0   Range is not included in this packet
-    23:21   reserved        0
+    23:21   reserved        000
     20  ber                 0   Bit Error Rate is not included in this packet
     19  threshold           0   Threshold is not included in this packet
     18  compressionpoint    0   Compression Point is not included in this packet
