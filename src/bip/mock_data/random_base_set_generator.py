@@ -2,6 +2,25 @@ import struct
 import random
 import uuid
 
+def create_random_metadata():
+    metadata = {}
+    metadata.update({'A': '0'})
+    metadata.update({'B': '0'})
+    metadata.update({'C': '0'})
+    metadata.update({'D': '0'})
+    metadata.update({'E': '0'})
+    metadata.update({'F': '0'})
+    metadata.update({'G': '0'})
+    metadata.update({'H': '0'})
+    metadata.update({'I': '0'})
+    metadata.update({'J': '0'})
+    metadata.update({'K':[]})
+    metadata.update({'L': []})
+    metadata.update({'M': []})
+    metadata.update({'N': []})
+
+    return metadata
+
 def add_packet_header(bin_file):
     bin_file.write('P'.encode('utf-8'))
     bin_file.write('R'.encode('utf-8'))
@@ -386,9 +405,11 @@ def main():
     file_uuid = uuid.uuid4()
     file_name = f"MOCK_BASE_SET_DATA_{file_uuid}.bin"
     
+    productRxmetadata = create_random_metadata()
+
     with open(file_name, 'wb') as bin_file:
         for i in range(10):
-            add_random_context_packet(bin_file)
+            startTime, streamID, receiveEvent =add_random_context_packet(bin_file)
 
             for j in range(400):
                 add_random_data_packet(bin_file)
