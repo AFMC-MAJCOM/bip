@@ -1,4 +1,3 @@
-import struct
 from pathlib import Path
 
 import pyarrow as pa
@@ -77,10 +76,10 @@ class _DataContextPacket(VitaExtensionCommandPacket):
         # Jan 1 2019 we need to add 1546300800 to bring it inline with Unix
         self.time = (bit_manipulation.time(tsi, tsf0, tsf1) + 1546300800)
         self.classId0, self.classId1 = self.class_identifier
-        
+
         #missing cam from ICD, should be words[7]
         #missing messageId from ICD, should be words[8]
-        
+
         self.cif0 = self.words[7] #pick up at words[7], data matches this
         self.cif1 = self.words[8]
         self.cif2 = self.words[9]
@@ -96,7 +95,7 @@ class _DataContextPacket(VitaExtensionCommandPacket):
         self.polarization = self.words[23]
         self.azimuth, self.elevation = bit_manipulation.pointing_vector(self.words[24]) #does not follow ICD, this byte position comes from their matlab script
         self.beamWidth = self.words[25]
-        self.cited_SID = self.words[26] 
+        self.cited_SID = self.words[26]
         self.functionPriorityId = self.words[27]
         self.dwell = bit_manipulation.dwell(self.words[28], self.words[29]) # does not follow ICD, this byte position comes from ther matlab script
         self.requested_input_GT = self.words[30]
@@ -129,7 +128,7 @@ class DataContext:
             ):
         assert isinstance(packet, _DataContextPacket)
         header = packet.packet_header
-    
+
 
         self.recorder.add_record({
             "packet_id": np.uint32(self.packet_id),
