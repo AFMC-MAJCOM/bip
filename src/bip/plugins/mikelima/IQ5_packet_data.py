@@ -11,7 +11,7 @@ MARKER_BYTES = 8
 HEADER_BYTES = 32
 
 _IQ5_packet_schema = [
-    ("IQ_type", pa.float32()),
+    ("IQ_type", pa.uint8()),
     ("session_id", pa.uint8()),
     ("increment", pa.uint32()),
     ("timestamp_from_filename", pa.uint64()),
@@ -101,7 +101,7 @@ class Process_IQ5_Packet():
         assert isinstance(packet, mblb.mblb_Packet)
     
         self.packet_recorder.add_record({
-            "IQ_type": np.float32(self.IQ_type),
+            "IQ_type": np.uint8(self.IQ_type),
             "session_id": np.uint8(self.session_id),
             "increment": np.uint32(self.increment),
             "timestamp_from_filename": np.uint64(self.timestamp_from_filename),
