@@ -115,7 +115,7 @@ class Parser:
         if bytes_read == 0: 
             if self.message_recorder.writer != None: 
                 self.message_recorder.close()
-            return None
+            return None, None
 
         SOM_obj = mblb.mblb_SOM(header_data, self._timestamp, self._IQ_type, self._session_id, self._increment, self._timestamp_from_filename)
         self._message_key = SOM_obj.message_key
