@@ -3,7 +3,7 @@ from pathlib import Path
 import traceback
 
 import numpy as np
-import pyarrow as pa 
+import pyarrow as pa
 
 from bip import non_vita
 
@@ -15,8 +15,8 @@ from bip.non_vita import mblb
 
 MESSAGE_FILENAME="message_content"
 PACKET_FILENAME="packet_content"
-UNHANDLED_MARKERS = [bytes.fromhex('F37FFF7FFF7FFF7F'), 
-                    bytes.fromhex('F77FFF7FFF7FFF7F'), 
+UNHANDLED_MARKERS = [bytes.fromhex('F37FFF7FFF7FFF7F'),
+                    bytes.fromhex('F77FFF7FFF7FFF7F'),
                     bytes.fromhex('F87FFF7FFF7FFF7F'),
                     bytes.fromhex('F97FFF7FFF7FFF7F'),
                     bytes.fromhex('FA7FFF7FFF7FFF7F')]
@@ -39,13 +39,16 @@ class Parser:
             log_level = None,
             data_recorder: type=None,
             context_key_function=None,
-            recorder_opts: dict = {},
+            recorder_opts: dict = None,
             **kwargs
             ):
+        if recorder_opts is None:
+            recorder_opts = {}
+
         self._output_path = output_path
         self._recorder = Recorder
         self._recorder_options = recorder_opts
-        
+
 
         self.options = kwargs
         self._bytes_read = 0
@@ -58,10 +61,10 @@ class Parser:
         self._session_id = 0
         self._increment = 0
         self._timestamp_from_filename = 0
-        
+
         self._EOM_length = IQ0_EOM_BYTES
-        self._closed = False  
-        
+        self._closed = False
+
         if not data_recorder:
             data_recorder = Recorder
 
@@ -72,7 +75,7 @@ class Parser:
                 'version': version,
                 'options': self.options,
                 'messages_read': self._messages_read,
-        } 
+        }
 
     @property
     def bytes_read(self) -> int:
@@ -85,10 +88,10 @@ class Parser:
     @property
     def packets_read(self) -> int:
         return self._packets_read
-        
+
     def initialize_message_processor(self, IQ_type: int):
         message_data_filename = f"{MESSAGE_FILENAME}.{self._recorder.extension()}"
-        
+
         self.message_processor = Process_Message(
                 self._output_path,
                 self._recorder,
@@ -104,7 +107,7 @@ class Parser:
             schema= pa.schema([(e[0], e[1]) for e in message_data._message_schema]),
             options=self._recorder_options,
             batch_size=10)
-    
+
     def read_message(self, buf: RawIOBase):
         '''
         Take in 1 64-bit word at a time, looking for EOM marker
@@ -112,8 +115,8 @@ class Parser:
         Will raise exception if we encounter any of the unhandled markers
         '''
         header_data, bytes_read = header.read_message_header(buf) # Bytearray and integer
-        if bytes_read == 0: 
-            if self.message_recorder.writer != None: 
+        if bytes_read == 0:
+            if self.message_recorder.writer != None:
                 self.message_recorder.close()
             return None, None
 
@@ -122,7 +125,7 @@ class Parser:
 
         message = bytearray(8)
         message_size = buf.readinto(message)
-        
+
         # Look for SOP not EOM
         # read packet size of packet
         while message[-8:] != bytes.fromhex('F27FFF7FFF7FFF7F'):
@@ -137,7 +140,7 @@ class Parser:
                     blank_end_of_message = bytearray(24*8)
                     blank_EOM_obj = mblb.mblb_EOM(blank_end_of_message)
                     self.__add_record(SOM_obj, blank_EOM_obj)
-        
+
                     self._bytes_read += bytes_read + message_size
                     return message[:-8], SOM_obj
                 SOP_obj = mblb.mblb_Packet(packet_header[16:(16+(LANES*HEADER_BYTES))])
@@ -154,16 +157,16 @@ class Parser:
                     blank_end_of_message = bytearray(self._EOM_length*8)
                     blank_EOM_obj = mblb.mblb_EOM(blank_end_of_message)
                     self.__add_record(SOM_obj, blank_EOM_obj)
-        
+
                     self._bytes_read += bytes_read + message_size
                     return message[:-8], SOM_obj
-                
+
                 message += packet_header + packet_data
                 message_size += header_length + data_length
 
             additional_message = bytearray(8)
             additional_message_length = buf.readinto(additional_message)
-           
+
             if additional_message in UNHANDLED_MARKERS:
                 raise Exception('This Bin file contains unhandled markers')
             if additional_message_length != 8:
@@ -171,13 +174,13 @@ class Parser:
                 blank_end_of_message = bytearray(self._EOM_length*8)
                 blank_EOM_obj = mblb.mblb_EOM(blank_end_of_message)
                 self.__add_record(SOM_obj, blank_EOM_obj)
-        
+
                 self._bytes_read += bytes_read + message_size
                 return message, SOM_obj
 
             message += additional_message
             message_size += additional_message_length
-            
+
         #Read the EOM markers for the other 2 lanes
         EOM_marker = bytearray(16)
         buf.readinto(EOM_marker)
@@ -188,10 +191,10 @@ class Parser:
         EOM_obj = mblb.mblb_EOM(end_of_message)
 
         self.__add_record(SOM_obj, EOM_obj)
-        
+
         self._bytes_read += bytes_read + message_size + 16 + (self._EOM_length*8)
         return message[:-8], SOM_obj
-    
+
     def __add_record(self,
             message: mblb.mblb_SOM,
             end: mblb.mblb_EOM
@@ -201,7 +204,7 @@ class Parser:
         '''
         assert isinstance(message, mblb.mblb_SOM)
         assert isinstance(end, mblb.mblb_EOM)
-    
+
         self.message_recorder.add_record({
             "IQ_type": np.uint8(message.IQ_type),
             "session_id": np.uint8(message.session_id),
@@ -250,21 +253,21 @@ class Parser:
         '''
         if progress_bar is not None:
             last_read = 0
-        
+
         num_bytes_read, orphan_packet_list, self._timestamp, self._IQ_type, self._session_id, self._increment, self._timestamp_from_filename = header.read_first_header(stream)
-        
+
         if self._IQ_type == 5:
             self._EOM_length = IQ5_EOM_BYTES
 
         self.initialize_message_processor(self._IQ_type)
-        
+
         self._bytes_read += num_bytes_read
-        
+
         orphan_packet_number = self.message_processor.process_orphan_packets(orphan_packet_list, self._IQ_type, self._session_id, self._increment, self._timestamp_from_filename)
-        
+
         msg_words, SOM_obj = self.read_message(stream) #bytearray of the whole message
         while msg_words:
-            
+
             num_packets = self.message_processor.process_msg(msg_words, SOM_obj) # break into packets
             self._messages_read += 1
             self._packets_read += num_packets
@@ -276,4 +279,4 @@ class Parser:
                 msg_words, SOM_obj = self.read_message(stream)
             except:
                 msg_words = None
-      
+

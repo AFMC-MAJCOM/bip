@@ -16,7 +16,7 @@ from bip.common import bit_manipulation
 ##  TODO: keep this up to date
 ##
 ##  My reading of the spec / reverse engineering the one sample has this
-##  for the layout of the context packets 
+##  for the layout of the context packets
 ## This has been updated based on the information sent by Vendor.
 ##
 ##         # 0 header
@@ -44,7 +44,7 @@ from bip.common import bit_manipulation
 ##         #20 temperature
 ##         #21 phase offset
 ##         #22 elliticity / tilt
-##         #23   3d pointing 
+##         #23   3d pointing
 ##         #24   3d pointing (header_size(8), wrds/rec(12), num_records(12))
 ##         #25   3d pointing ecef_0
 ##         #26   3d pointing ecef_0
@@ -116,7 +116,7 @@ _schema = [
     ("tilt", pa.float32(), None),
 
     #3d pointing structure
-    
+
     ("array_size", pa.uint32(), None),
     ("num_records", pa.uint32(), None),
     ("num_words_per_rec", pa.uint32(), None),
@@ -145,7 +145,7 @@ _schema = [
 
     ("frame_index", pa.uint32(), None),
     ("packet_index", pa.uint32(), None),
-    
+
     ("local_context_key", pa.string(), None)
     ]
 
@@ -172,7 +172,7 @@ class _ContextPacket(ContextPacket):
         #make sure we have the right time codes
         assert self.packet_header.tsi == 0b10 # GPS time
         assert self.packet_header.tsf == 0b10 # real-time (ps) timestamp
-    
+
         tsi = self.integer_timestamp
         tsf0, tsf1 = self.fractional_timestamp
         self.time = bit_manipulation.time(tsi, tsf0, tsf1)
@@ -192,30 +192,30 @@ class _ContextPacket(ContextPacket):
         assert self.cif2 == 0b00000000000000000000000110000000
         assert self.cif3 == 0b00000001110000000000000000000000
 
-        
+
         '''
         Rule 9.5.1-2 VITA 49.2 SPEC
-        The Bandwidth field 
-        shall use the 64-bit, two’s-complement format shown in Figure 9.5.1-1. This field has an integer and a 
+        The Bandwidth field
+        shall use the 64-bit, two’s-complement format shown in Figure 9.5.1-1. This field has an integer and a
         fractional part with the radix point to the right of bit 20 in the second 32-bit word.
         range: 0.00 to 8.79 terahertz
         resolution: 0.95 microhertz
         '''
         self.bandwidth = int(self.words[11:13].view(dtype = np.int64)[0])*(2**-20)*(1e-6)
-        
+
         '''
         Rule 9.5.5-3 VITA 49.2 SPEC
-        The IF Reference Frequency subfield shall use the 64-bit, two’s-complement format as shown in Figure 9.5.5-1. 
-        This field has an integer and a fractional part, with the radix point to the right of bit 20 in the second 32-bit 
+        The IF Reference Frequency subfield shall use the 64-bit, two’s-complement format as shown in Figure 9.5.5-1.
+        This field has an integer and a fractional part, with the radix point to the right of bit 20 in the second 32-bit
         word.
         range: +- 8.79 terahertz
         resolution: 0.95 microhertz
         '''
         self.if_reference_freq = int(self.words[13:15].view(dtype = np.int64)[0])*(2**-20)*(1e-9)
-        
+
         '''
         Rule 9.5.10-2 VITA 49.2 2017 SPEC
-        This subfield has an integer and a fractional part, with the radix point to the right of bit 20 in the 
+        This subfield has an integer and a fractional part, with the radix point to the right of bit 20 in the
         second 32-bit word.
         '''
         self.rf_reference_freq = int(self.words[15:17].view(dtype = np.int64)[0])*(2**-20)*(1e-9)
@@ -240,14 +240,14 @@ class _ContextPacket(ContextPacket):
 
         '''
         Rule 9.10.5-1
-        The Temperature value shall be expressed in two's-complement 
-        format in the lower 16 bits of this field. This field has an integer and a fractional part, with the radix point 
+        The Temperature value shall be expressed in two's-complement
+        format in the lower 16 bits of this field. This field has an integer and a fractional part, with the radix point
         to the right of bit 6.
         range: -273.15 C to 511.984375 C.
         resolution: 0.015625 C (1/64 C) (Obesrvation 9.10.5-1)
         '''
         self.temperature = int(self.words[20:21].view(dtype=np.int16)[0])*(2**-6)
-        
+
         '''
         Rule 9.5.8-2 Vita 49.2 SPEC
         This field has an integer and a fractional part, with the radix point to the right of bit 7 of the field.
@@ -256,8 +256,8 @@ class _ContextPacket(ContextPacket):
 
         '''
         Rule 9.4.8-2 VITA 49.2 SPEC
-        the Ellipticity 
-        Angle value expressed in two's-complement format in the lower 16 bits of the Polarization field. This 
+        the Ellipticity
+        Angle value expressed in two's-complement format in the lower 16 bits of the Polarization field. This
         subfield has an integer and a fractional part, with the radix point to the right of bit 7 of the subfield.
         '''
         ellipticity, tilt = self.words[22:23].view(dtype=np.int16)
@@ -265,11 +265,11 @@ class _ContextPacket(ContextPacket):
 
         '''
         Rule 9.4.8-3 VITA 49.2 SPEC
-        Tilt Angle value expressed in two's-complement format in the upper 16 bits of the Polarization field. This subfield has an 
+        Tilt Angle value expressed in two's-complement format in the upper 16 bits of the Polarization field. This subfield has an
         integer and a fractional part, with the radix point to the right of bit 7 of the subfield.
         '''
         self.tilt = int(tilt)*(2**-13)
-        
+
         # 3d Pointing Vector Structure
         self.array_size = self.words[23]
         self.header_size = int(f"{self.words[24]:032b}"[:8], 2)
@@ -279,12 +279,12 @@ class _ContextPacket(ContextPacket):
         self.ecef_0 = self.words[25:27].view(dtype=np.float64)
         self.ecef_1 = self.words[27:29].view(dtype=np.float64)
         self.ecef_2 = self.words[29:31].view(dtype=np.float64)
-        
+
         '''
         Rule 9.4.1.1-2
         range: 0 to 511.9921875 degrees
         resolution: 0.0078125 degrees
-        
+
         This rule is not true for this data
         '''
         azimuthal_angle_0, elevation_angle_0 = self.words[31:32].view(dtype=np.int16)
@@ -299,7 +299,7 @@ class _ContextPacket(ContextPacket):
         self.steering_mode_0 = self.words[32]
         self.reserved_0 = self.words[33]
         self.reserved_1 = self.words[34]
-        
+
         '''
         VITA 49.2 spec says "this field has an integer and a fractional part, with the
         radix point to the right of bit 7 of the field." Does this mean this value should be a float??
@@ -334,7 +334,7 @@ class _ContextPacket(ContextPacket):
         self.pulse_width = int(self.words[40:42].view(dtype = np.int64)[0]) * (1e-15)
         self.pri = int(self.words[42:44].view(dtype = np.int64)[0]) * (1e-15)
         self.duration = int(self.words[44:46].view(dtype = np.int64)[0]) * (1e-15)
-        
+
         if ("{stream_id}" in context_key):
             self.context_packet_key = context_key.format(stream_id=self.stream_id)
         else:
@@ -345,10 +345,13 @@ class Context:
     def __init__(self,
             output_path: Path,
             Recorder: type,
-            recorder_opts: dict = {},
+            recorder_opts: dict = None,
             batch_size: int = 1000,
             **kwargs):
-        
+
+        if recorder_opts is None:
+            recorder_opts = {}
+
         self.recorder = Recorder(
                 output_path,
                 schema=pa.schema([(e[0], e[1]) for e in _schema]),
@@ -367,7 +370,7 @@ class Context:
 
         self.recorder.add_record({
             "packet_id": np.uint32(self.packet_id),
-            
+
             "packet_size": np.uint16(header.packet_size + 1),
             "packet_count": np.uint16(header.packet_count),
             "tsfd": np.uint8(header.tsf),
@@ -405,7 +408,7 @@ class Context:
             "phase_offset": np.float32(packet.phase_offset),
             "ellipticity": np.float32(packet.ellipticity),
             "tilt": np.float32(packet.tilt),
-            
+
             "array_size": np.uint32(packet.array_size),
             "num_records": np.uint32(packet.num_records),
             "num_words_per_rec": np.uint32(packet.num_words_per_rec),
@@ -421,7 +424,7 @@ class Context:
             "steering_mode_0": np.uint32(packet.steering_mode_0),
             "reserved_0": np.uint32(packet.reserved_0),
             "reserved_1": np.uint32(packet.reserved_0),
-            
+
             "beam_width_vert": np.float32(packet.beam_width_vert),
             "beam_width_horiz": np.float32(packet.beam_width_horiz),
             "range": np.float32(packet.range),
@@ -434,7 +437,7 @@ class Context:
 
             "frame_index": np.uint32(frame_index),
             "packet_index": np.uint32(frame_index),
-            
+
             "local_context_key": packet.context_packet_key
         })
 

@@ -55,11 +55,15 @@ class Parser:
             Recorder: type,
             log_level=logging.WARNING,
             data_recorder: type = None,
-            recorder_opts: dict = {},
+            recorder_opts: dict = None,
             context_key_function=None,
             orphan_context_key : str = "ORPHAN_DATA",
             **kwargs
             ):
+
+        if recorder_opts is None:
+            recorder_opts = {}
+
         self.options = kwargs
         self.clean = False
         if kwargs.get("clean") == True:
@@ -74,12 +78,12 @@ class Parser:
         self._closed = False
         self._context_key_function = (lambda x: x) if not context_key_function else context_key_function
         self._latest_context_key = orphan_context_key
-        
+
         self.logger = our_logging.create_logger(__name__, "TANGO", logger_level=log_level, log_dir=os.path.join(output_path, "bip", "logs"))
-        
+
         if not data_recorder:
             data_recorder = Recorder
-        
+
         frame_data_filename = f"{FRAME_DATA_FILENAME}.{Recorder.extension()}"
         self.frame_recorder = Recorder(
                 output_path / frame_data_filename,
@@ -142,7 +146,7 @@ class Parser:
         self.options["heartbeat_context"] = {
                 "filename": heartbeat_context_filename,
         } | self.heartbeat_context.metadata
-        
+
         gps_context_filename = f"{GPS_EXTENSION_CONTEXT_FILENAME}.{Recorder.extension()}"
         self.gps_context = GPSExtensionContext(
                 output_path / gps_context_filename,
@@ -166,7 +170,7 @@ class Parser:
     @property
     def bytes_read(self) -> int:
         return self._bytes_read
-        
+
     @property
     def frame_count(self) -> int:
         return self._frame_count
@@ -174,7 +178,7 @@ class Parser:
     @property
     def frame_size(self) -> int:
         return self._frame_size
-        
+
     @property
     def start_bytes(self) -> int:
         return self._start_bytes
@@ -182,7 +186,7 @@ class Parser:
     @property
     def packets_read(self) -> int:
         return self._packets_read
-    
+
     @property
     def bad_packets(self) -> int:
         return self._bad_packets
@@ -194,7 +198,7 @@ class Parser:
 
     def remove_deadbeef(self, payload: bytearray):
         DEADBEEF_BYTEARRAY = bytearray.fromhex("EFBEADDE")
-        
+
         db_idx = payload.find(DEADBEEF_BYTEARRAY)
         new_payload = bytearray()
         if (db_idx > 0):
@@ -232,7 +236,7 @@ class Parser:
         self._frame_size = np.uint32(header[1])
         self._start_bytes = (self._bytes_read + bytes_read)
         starting_location = buf.tell()
-        
+
         #Not counting VRLP and packet header
         FRAME_HEADER_WORDS_CNT = 2
         payload_size_words = header[1] - FRAME_HEADER_WORDS_CNT
@@ -266,7 +270,7 @@ class Parser:
 
             #leave off VEND
             return payload[:-4], payload_size_words - 1
-        
+
         else:  # its a bad packet
             ''' From here we know the packet_size is wrong
             There are 3 possibilities
@@ -283,7 +287,7 @@ class Parser:
                 if self.frame_recorder.writer != None:
                     self.frame_recorder.close()
                 self.logger.warning(f"incomplete read {payload_size_bytes}/{expected_size} bytes")
-    
+
             #This checks if packet_size is too large
             elif premature_ending != -1:
                 self.logger.info("Found DNEV within payload, cutting the payload short to match this.")
@@ -293,23 +297,23 @@ class Parser:
                 new_payload_size_bytes = buf.readinto(new_payload)
                 new_payload_size_words = int(premature_ending / 4) + 1
                 self._bytes_read += (bytes_read + total_payload_diff + new_payload_size_bytes)
-                payload = new_payload 
-                
+                payload = new_payload
+
             else:
                 reason = "Could not find DNEV trailer, frame size given does not match data"
                 # If packet_size is too small it's very annoying so true.
                 while payload[-4:] != bytes("DNEV", encoding="ascii"):
                     buffer_payload = bytearray(4)
                     buffer_size = buf.readinto(buffer_payload)
-        
+
                     if buffer_size == 0:
                         self.logger.warning("Last packet has incorrect packet_size")
                         break
-        
+
                     payload_size_bytes += 4
                     payload += buffer_payload
                 self._bytes_read += (bytes_read + payload_size_bytes + total_payload_diff)
-                    
+
             self.bad_packets_recorder.add_record({
                 "frame_count": np.uint32(self._frame_count),
                 "frame_size": np.uint32(self._frame_size),
@@ -320,12 +324,12 @@ class Parser:
             })
             self._bad_packets += 1
             return BAD_PACKET_STATUS_CODE, None
-        
+
 
     def process_packet(self, packet_type: int, class_id: int, payload: bytes, payload_size: int):
         packet_class_code = int(class_id & 0xFFFF)
         info_class_code = int(class_id >> 16)
-        
+
         if packet_type == SIGNAL_DATA_PACKET:
             self.signal_data.process(
                     payload,
@@ -336,7 +340,7 @@ class Parser:
         elif packet_type == CONTEXT_DATA_PACKET:
             # We found a new context packet, so set the latest context key
             self._latest_context_key = self._context_key_function(str(self._frames_read))
-            
+
             self.context.process(
                     payload,
                     frame_index = self._frames_read,
@@ -364,7 +368,7 @@ class Parser:
 
     def parse_stream(self, stream: RawIOBase, progress_bar=None):
         self.logger.info("Starting the parsing...")
-        
+
         if progress_bar is not None:
             last_read = 0
 
@@ -373,7 +377,7 @@ class Parser:
         stream.seek(0, os.SEEK_SET)
 
         self.find_first_packet(stream)
-        
+
         vita_payload, payload_size = self.read_packet(stream)
         while self.bytes_read < self.EOF:
             #in principle i need a second loop here because, acording to the
@@ -386,9 +390,9 @@ class Parser:
                 header = vita.vrt_header(vita_payload)
                 packet = vita.vrt_packet(vita_payload)
                 class_id = packet.class_identifier
-            
+
                 self.process_packet(header.packet_type, class_id[1], vita_payload, payload_size)
-            
+
             self._packets_read += 1
             self._frames_read += 1
 
@@ -400,4 +404,3 @@ class Parser:
                     print(f"{(self.bytes_read / self.EOF) * 100:.2f}% processed")
 
             vita_payload, payload_size = self.read_packet(stream)
-                

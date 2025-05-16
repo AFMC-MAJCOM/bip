@@ -14,7 +14,7 @@ class Parser(Protocol):
             input_path: Path,
             output_path: Path,
             recorder: Recorder,
-            recorder_opts: dict = {}
+            recorder_opts: dict = None
             ):
         """
         Defines the protocol for the protocol constructor.

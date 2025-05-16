@@ -74,14 +74,14 @@ class Process_Message:
     def __init__(self,
             output_path: Path,
             Recorder: type,
-            recorder_opts: dict = {},
+            recorder_opts: dict = None,
             batch_size: int = 100,
             IQ_type:  int = 0,
             **kwargs):
-                
+
         self.options = kwargs
         self.packet_id = 0
-        
+
         if IQ_type == 5:
             packet_data_filename = f"{IQ5_PACKET_FILENAME}.{Recorder.extension()}"
             self.packet_processor = Process_IQ5_Packet(
@@ -107,9 +107,9 @@ class Process_Message:
             #skip the start of packet
             SOP = packet[(LANES*MARKER_BYTES):(LANES*(MARKER_BYTES+HEADER_BYTES))]
             SOP_obj = mblb.mblb_Packet(SOP)
-                
+
             self.packet_processor.process_orphan_packet(packet, SOP_obj, IQ_type, session_id, increment, timestamp_from_filename) # read individual packet
-        
+
         return len(orphan_packet_list)
 
     def read_packets(self, stream: bytearray):
@@ -118,35 +118,35 @@ class Process_Message:
         returns the packet list
         '''
         numpy_stream = np.array(stream, dtype = np.uint8())
-            
+
         index_list = numpy_manipulation.find_subarray_indexes(numpy_stream, START_OF_PACKET)
         packet_list = np.split(numpy_stream, index_list)
 
         return packet_list[1:]
-            
+
     def process_msg(self, stream: bytearray, SOM_obj):
         '''
         Process the message by creating a list of the packets inside of it
         returns the length of the packet list
         '''
         assert stream[0:(LANES*MARKER_BYTES)] == START_OF_PACKET
-        
+
         packet_list = self.read_packets(stream) #bytearray of the whole message
-            
+
         for count, packet in enumerate(packet_list):
             '''
-            count here will give us the index, thus knowing how many dwells 
+            count here will give us the index, thus knowing how many dwells
             to factor into the time calculation
             '''
             packet = bytearray(packet)
-            
+
             #SOP is 3 32-byte headers
             SOP = packet[(LANES*MARKER_BYTES):(LANES*(MARKER_BYTES+HEADER_BYTES))] #skip the start of packet
             SOP_obj = mblb.mblb_Packet(SOP)
-                
+
             self.packet_processor.process_packet(packet, SOP_obj, SOM_obj, count) # read individual packet
         return len(packet_list)
-    
+
     @property
     def metadata(self) -> dict :
         return self.packet_processor.metadata | {"schema": schema}

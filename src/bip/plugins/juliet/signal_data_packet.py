@@ -62,9 +62,12 @@ class SignalData:
     def __init__(self,
             output_path: Path,
             Recorder: type,
-            recorder_opts: dict = {},
+            recorder_opts: dict = None,
             batch_size: int = 1000,
             **kwargs):
+        if recorder_opts is None:
+            recorder_opts = {}
+
         self.options = kwargs
         self.recorder = Recorder(
                 output_path,

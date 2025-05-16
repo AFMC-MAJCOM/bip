@@ -22,10 +22,10 @@ _schema = [
     ("classid_packet_class_code", pa.uint16(), None),
 
     ("system_status", pa.list_(pa.uint16(), -1), None),
-    ("filter_status", pa.list_(pa.uint16(), -1), None), 
-    ("unix_time_seconds", pa.list_(pa.uint32(), -1), "sec"), 
-    ("microseconds", pa.list_(pa.uint32(), -1), "usec"), 
-    ("latitude", pa.list_(pa.float64(), -1), "rad"), 
+    ("filter_status", pa.list_(pa.uint16(), -1), None),
+    ("unix_time_seconds", pa.list_(pa.uint32(), -1), "sec"),
+    ("microseconds", pa.list_(pa.uint32(), -1), "usec"),
+    ("latitude", pa.list_(pa.float64(), -1), "rad"),
     ("longitude", pa.list_(pa.float64(), -1), "rad"),
     ("altitude", pa.list_(pa.float64(), -1), "m"),
     ("velocity_0", pa.list_(pa.float32(), -1), "m/s"),
@@ -61,7 +61,7 @@ schema = [ _schema_elt(e) for e in _schema ]
 class _GPSExtensionContextPacket(ContextPacket):
     def __init__(self, payload: bytes):
         super().__init__(payload)
-        
+
         assert self.class_id.information_class_code == 3
         assert self.class_id.packet_class_code == 3
 
@@ -91,7 +91,7 @@ class _GPSExtensionContextPacket(ContextPacket):
 
         # The GPS Context packet contains 25 navigational structures each containing the following
         # 23 fields.
-        # The navigational structures appear starting at word 4 after the 
+        # The navigational structures appear starting at word 4 after the
         # header, stream id, and 2 word class id
         for i in range(25):
             ss, fs = self.words[(25*i)+4:(25*i)+5].view(dtype=np.int16)
@@ -124,9 +124,12 @@ class GPSExtensionContext:
     def __init__(self,
             output_path: Path,
             Recorder: type,
-            recorder_opts: dict = {},
+            recorder_opts: dict = None,
             batch_size: int = 1,
             **kwargs):
+
+        if recorder_opts is None:
+            recorder_opts = {}
 
         self.recorder = Recorder(
                 output_path,
@@ -147,7 +150,7 @@ class GPSExtensionContext:
 
         self.recorder.add_record({
             "packet_id": np.uint32(self.packet_id),
-            
+
             "packet_size": np.uint16(header.packet_size),
             "packet_count": np.uint16(header.packet_count),
             "tsfd": np.uint8(header.tsf),
@@ -161,10 +164,10 @@ class GPSExtensionContext:
             "classid_packet_class_code": np.uint16(packet.class_id.packet_class_code),
 
             "system_status": packet.system_status,
-            "filter_status": packet.filter_status, 
-            "unix_time_seconds": packet.unix_time_seconds, 
-            "microseconds": packet.microseconds, 
-            "latitude": packet.latitude, 
+            "filter_status": packet.filter_status,
+            "unix_time_seconds": packet.unix_time_seconds,
+            "microseconds": packet.microseconds,
+            "latitude": packet.latitude,
             "longitude": packet.longitude,
             "altitude": packet.altitude,
             "velocity_0": packet.velocity_0,
