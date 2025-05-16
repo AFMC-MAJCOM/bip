@@ -78,6 +78,8 @@ class Process_Message:
             batch_size: int = 100,
             IQ_type:  int = 0,
             **kwargs):
+        if recorder_opts is None:
+            recorder_opts = {}
 
         self.options = kwargs
         self.packet_id = 0
