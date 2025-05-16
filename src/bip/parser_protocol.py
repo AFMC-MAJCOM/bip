@@ -1,14 +1,12 @@
 from io import RawIOBase
 from pathlib import Path
 from typing import Protocol, runtime_checkable
-import abc
 
 import tqdm
 
 from bip.recorder.recorder_protocol import Recorder
 
 @runtime_checkable
-@abc.ABC
 class Parser(Protocol):
     def __init__(self,
             input_path: Path,
@@ -21,7 +19,6 @@ class Parser(Protocol):
         """
         pass
 
-    @abc.abstractmethod
     def parse_stream(self, stream: RawIOBase, progress_bar: tqdm.tqdm) -> None:
         """
         Parses a stream of binary data for a specific format.
@@ -29,7 +26,6 @@ class Parser(Protocol):
         pass
 
     @property
-    @abc.abstractmethod
     def metadata(self) -> dict:
         """
         Information about this parser.
@@ -37,7 +33,6 @@ class Parser(Protocol):
         pass
 
     @property
-    @abc.abstractmethod
     def bytes_read(self) -> int:
         """
         How many bytes have been read by this parser from the stream.
@@ -45,7 +40,6 @@ class Parser(Protocol):
         pass
 
     @property
-    @abc.abstractmethod
     def packets_read(self) -> int:
         """
         How many packets have been read by this parser from the stream.
