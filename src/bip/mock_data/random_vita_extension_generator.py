@@ -17,7 +17,7 @@ def add_packet_trailer(bin_file):
     bin_file.write('E'.encode('utf-8'))
     bin_file.write('V'.encode('utf-8'))
 
-def add_random_data_packet(bin_file, packet_number, packet_size):
+def add_random_data_packet(bin_file, packet_number):
     add_packet_header(bin_file)
     '''
     Header Definition:
@@ -27,7 +27,7 @@ def add_random_data_packet(bin_file, packet_number, packet_size):
     26      isAck           0       This is not an Acknowledge packet
     25      reserved        1
     24      isCancellation  0       This is not a Calcellation packet
-    23:22   tsi             00      Integer Timestamp definition 
+    23:22   tsi             00      Integer Timestamp definition
                                     00: Not included
                                     01: UTC time
                                     10 GPS time
@@ -52,7 +52,7 @@ def add_random_data_packet(bin_file, packet_number, packet_size):
         Q = random.randint(-40,40)
         bin_file.write(struct.pack('<h', I))
         bin_file.write(struct.pack('<h', Q))
-    
+
     add_packet_trailer(bin_file)
 
 def add_random_context_packet(bin_file, packet_count, payload_size):
@@ -65,7 +65,7 @@ def add_random_context_packet(bin_file, packet_count, payload_size):
     26      isAck           0       This is not an Acknowledge packet
     25      reserved        1
     24      isCancellation  0       This is not a Calcellation packet
-    23:22   tsi             00      Integer Timestamp definition 
+    23:22   tsi             00      Integer Timestamp definition
                                     00: Not included
                                     01: UTC time
                                     10 GPS time
@@ -126,7 +126,7 @@ def add_random_context_packet(bin_file, packet_count, payload_size):
     '''
     cif0 = 0b00000000000000000000000010001000
     bin_file.write(struct.pack('<I',cif0))
-    
+
     '''
     CIF3 Definition
     '''
@@ -153,7 +153,7 @@ def add_random_context_packet(bin_file, packet_count, payload_size):
     D = random.randint(0, 1024)
     bin_file.write(struct.pack('I',D))
 
-    E = random.choice([payload_size/4, payload_size/40, payload_size/400, payload_size/4000]) 
+    E = random.choice([payload_size/4, payload_size/40, payload_size/400, payload_size/4000])
     bin_file.write(struct.pack('Q',E))
 
     F = random.gauss(1704067200000, 100000000000)
@@ -214,7 +214,7 @@ def add_random_extension_context_packet(bin_file):
     26      isAck           0       This is not an Acknowledge packet
     25      reserved        1
     24      isCancellation  0       This is not a Calcellation packet
-    23:22   tsi             00      Integer Timestamp definition 
+    23:22   tsi             00      Integer Timestamp definition
                                     00: Not included
                                     01: UTC time
                                     10 GPS time
@@ -224,7 +224,7 @@ def add_random_extension_context_packet(bin_file):
                                     01: Sample Count
                                     10: picoseconds
                                     11: frequency running
-    19:16   packet_count    1    
+    19:16   packet_count    1
     15:0    packet_size     26      The size of this packet. 30 words
     '''
     header_start = 0b0101001000000001
@@ -366,7 +366,7 @@ def main():
     number_of_events= 10
     payload_size = 2621400
     data_packet_size = 65535
-    
+
     with open(file_name, 'wb') as bin_file:
         add_random_extension_context_packet(bin_file)
 
@@ -374,7 +374,7 @@ def main():
             add_random_context_packet(bin_file, i, payload_size)
 
         for j in range((number_of_events*payload_size)/data_packet_size):
-            add_random_data_packet(bin_file, j%number_of_events, data_packet_size)
+            add_random_data_packet(bin_file, j%number_of_events)
 
 if __name__ == "__main__":
     main()
