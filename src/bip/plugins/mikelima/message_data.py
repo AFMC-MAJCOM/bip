@@ -76,7 +76,7 @@ class Process_Message:
             Recorder: type,
             recorder_opts: dict = None,
             batch_size: int = 100,
-            IQ_type:  int = 0,
+            iq_type:  int = 0,
             **kwargs):
         if recorder_opts is None:
             recorder_opts = {}
@@ -84,7 +84,7 @@ class Process_Message:
         self.options = kwargs
         self.packet_id = 0
 
-        if IQ_type == 5:
+        if iq_type == 5:
             packet_data_filename = f"{IQ5_PACKET_FILENAME}.{Recorder.extension()}"
             self.packet_processor = Process_IQ5_Packet(
                     output_path / packet_data_filename,

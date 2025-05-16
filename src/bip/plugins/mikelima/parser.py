@@ -134,11 +134,11 @@ class Parser:
         message_size = 0
         next_marker = bytearray(8)
 
-        n_dwells = 2
+        n_beams = 2
         eom_length = IQ0_EOM_BYTES
 
         if self._iq_type == 5:
-            n_dwells = 3
+            n_beams = 3
             eom_length = IQ5_EOM_BYTES
 
         # Look for SOP not EOM
@@ -163,8 +163,6 @@ class Parser:
             if next_marker == END_OF_MESSAGE_MARKER:
                 break
 
-            message += next_marker
-            message_size += next_marker_length
             if next_marker != START_OF_PACKET_MARKER:
                 # These are not the bytes we're looking for.
                 continue
@@ -186,7 +184,7 @@ class Parser:
                 return next_marker, som_obj
             sop_obj = mblb.mblb_Packet(packet_header[16:(16+(LANES*HEADER_BYTES))])
 
-            packet_size = int(4*(som_obj.Dwell*(1280/(2**sop_obj.Rx_config))*n_dwells))
+            packet_size = int(4*(som_obj.Dwell*(1280/(2**sop_obj.Rx_config))*n_beams))
 
             packet_data = bytearray(packet_size)
             data_length = buf.readinto(packet_data)
@@ -199,6 +197,8 @@ class Parser:
                 self._bytes_read += bytes_read + message_size
                 return next_marker, som_obj
 
+            message += next_marker
+            message_size += next_marker_length
             message += packet_header + packet_data
             message_size += header_length + data_length
 
@@ -214,7 +214,7 @@ class Parser:
         self.__add_record(som_obj, eom_obj)
 
         self._bytes_read += bytes_read + message_size + 16 + (eom_length*8)
-        return message[:-8], som_obj
+        return message, som_obj
 
     def __add_record(self,
             message: mblb.mblb_SOM,

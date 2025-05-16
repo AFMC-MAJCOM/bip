@@ -183,9 +183,10 @@ class Process_IQ5_Packet():
         right before the next SOP or EOM
         '''
         self.sample_rate = 1280/(2**packet.Rx_config)
+        data_word_count = np.uint64(2*SOM_obj.Dwell*BEAMS*self.sample_rate)
         data = np.frombuffer(stream,
                             offset=np.uint64(LANES*(MARKER_BYTES+HEADER_BYTES)),
-                            count=np.uint64(2*SOM_obj.Dwell*BEAMS*self.sample_rate),
+                            count=data_word_count,
                             dtype = np.int16).reshape((-1, 2))
         self.left_data = data[::3]
         self.right_data = data[1::3]
