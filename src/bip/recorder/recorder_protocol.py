@@ -14,14 +14,26 @@ class Recorder(Protocol):
 
     @staticmethod
     def extension() -> str:
+        """
+        The file extention type for files that this recorder writes.
+        """
         pass
 
     @property
     def metadata(self) -> dict:
+        """
+        Metadata about this recorder.
+        """
         pass
 
     def add_record(self, record: dict):
+        """
+        Add a record to the recorder, to be written to the output.
+        """
         pass
 
     def close(self):
+        """
+        Close the recorder.
+        """
         pass
