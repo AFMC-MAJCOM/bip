@@ -166,7 +166,7 @@ class ProcessIq5Packet():
         self.session_id = session_id
         self.increment = increment - 1
         self.timestamp_from_filename = timestamp_from_filename
-        self.sample_rate = 1280/(2**sop_obj.Rx_config)
+        self.sample_rate = 1280/(2**sop_obj.rx_config)
         self.afs_mode = np.nan
         self.sched_num = np.nan
         self.si_in_sched_num = np.nan
@@ -182,8 +182,8 @@ class ProcessIq5Packet():
         we know that bytearray starts at SOP and ends
         right before the next SOP or EOM
         '''
-        self.sample_rate = 1280/(2**packet.Rx_config)
-        data_word_count = np.uint64(2*som_obj.Dwell*BEAMS*self.sample_rate)
+        self.sample_rate = 1280/(2**packet.rx_config)
+        data_word_count = np.uint64(2*som_obj.dwell*BEAMS*self.sample_rate)
         data = np.frombuffer(stream,
                             offset=np.uint64(LANES*(MARKER_BYTES+HEADER_BYTES)),
                             count=data_word_count,
@@ -191,13 +191,13 @@ class ProcessIq5Packet():
         self.left_data = data[::3]
         self.right_data = data[1::3]
         self.center_data = data[2::3]
-        self.time = som_obj.Time_since_epoch_us + (packet_list_index * som_obj.Dwell)
-        self.iq_type = som_obj.IQ_type
+        self.time = som_obj.time_since_epoch_us + (packet_list_index * som_obj.dwell)
+        self.iq_type = som_obj.iq_type
         self.session_id = som_obj.session_id
         self.increment = som_obj.increment
         self.timestamp_from_filename = som_obj.timestamp_from_filename
-        self.afs_mode = som_obj.AFS_mode
-        self.sched_num = som_obj.SchedNum
-        self.si_in_sched_num = som_obj.SIinSchedNum
+        self.afs_mode = som_obj.afs_mode
+        self.sched_num = som_obj.sched_num
+        self.si_in_sched_num = som_obj.si_in_sched_num
 
         self.__add_record(packet, self.left_data, self.right_data, self.center_data)
