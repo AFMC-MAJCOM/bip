@@ -146,7 +146,6 @@ class Parser:
         # While the last 8 bytes read are not the start of the 24 byte end of message marker.
         while True:
             next_marker_length = buf.readinto(next_marker)
-            print(next_marker.hex(), next_marker_length)
 
             if next_marker_length != 8:
                 print('Message is broken: no EOM found')
