@@ -23,20 +23,32 @@ class Parser(Protocol):
 
     @abc.abstractmethod
     def parse_stream(self, stream: RawIOBase, progress_bar: tqdm.tqdm) -> None:
+        """
+        Parses a stream of binary data for a specific format.
+        """
         pass
 
     @property
     @abc.abstractmethod
     def metadata(self) -> dict:
+        """
+        Information about this parser.
+        """
         pass
 
     @property
     @abc.abstractmethod
     def bytes_read(self) -> int:
+        """
+        How many bytes have been read by this parser from the stream.
+        """
         pass
 
     @property
     @abc.abstractmethod
     def packets_read(self) -> int:
+        """
+        How many packets have been read by this parser from the stream.
+        """
         pass
 
