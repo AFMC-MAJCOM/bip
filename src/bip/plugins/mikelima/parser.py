@@ -130,8 +130,9 @@ class Parser:
         som_obj = mblb.mblb_SOM(header_data, self._timestamp, self._iq_type, self._session_id, self._increment, self._timestamp_from_filename)
         self._message_key = som_obj.message_key
 
-        message = bytearray(8)
-        message_size = buf.readinto(message)
+        message = bytearray(0)
+        message_size = 0
+        next_marker = bytearray(8)
 
         n_dwells = 2
         eom_length = IQ0_EOM_BYTES
@@ -143,49 +144,11 @@ class Parser:
         # Look for SOP not EOM
         # read packet size of packet
         # While the last 8 bytes read are not the start of the 24 byte end of message marker.
-        while message[-8:] != END_OF_MESSAGE_MARKER:
-            # If the next 8 bytes are the start of the 24 byte start of packet marker.
-            if message[-8:] == START_OF_PACKET_MARKER:
-                #16 bytes for the packet markers for the other 2 lanes
-                #plus 3 32-byte headers
-                packet_header = bytearray(16 + (LANES*HEADER_BYTES))
+        while True:
+            next_marker_length = buf.readinto(next_marker)
+            print(next_marker.hex(), next_marker_length)
 
-                header_length = buf.readinto(packet_header)
-                if header_length != (16+(LANES*HEADER_BYTES)):
-                    print('Message is broken: the packet header is incomplete')
-                    blank_end_of_message = bytearray(24*8)
-                    blank_eom_obj = mblb.mblb_EOM(blank_end_of_message)
-                    self.__add_record(som_obj, blank_eom_obj)
-
-                    self._bytes_read += bytes_read + message_size
-                    return message[:-8], som_obj
-                sop_obj = mblb.mblb_Packet(packet_header[16:(16+(LANES*HEADER_BYTES))])
-
-                packet_size = int(4*(som_obj.Dwell*(1280/(2**sop_obj.Rx_config))*n_dwells))
-
-                packet_data = bytearray(packet_size)
-                data_length = buf.readinto(packet_data)
-                if data_length != packet_size:
-                    print('Message is broken: the packet data is incomplete')
-                    blank_end_of_message = bytearray(eom_length*8)
-                    blank_eom_obj = mblb.mblb_EOM(blank_end_of_message)
-                    self.__add_record(som_obj, blank_eom_obj)
-
-                    self._bytes_read += bytes_read + message_size
-                    return message[:-8], som_obj
-
-                message += packet_header + packet_data
-                message_size += header_length + data_length
-
-            # Look at the next 8 bytes of the message to get to the next
-            # message marker.
-            additional_message = bytearray(8)
-            additional_message_length = buf.readinto(additional_message)
-
-            if additional_message in UNHANDLED_MARKERS:
-                print("This bin file contains unhandled markers")
-                return None, None
-            if additional_message_length != 8:
+            if next_marker_length != 8:
                 print('Message is broken: no EOM found')
                 blank_end_of_message = bytearray(eom_length*8)
                 blank_eom_obj = mblb.mblb_EOM(blank_end_of_message)
@@ -194,13 +157,56 @@ class Parser:
                 self._bytes_read += bytes_read + message_size
                 return message, som_obj
 
-            message += additional_message
-            message_size += additional_message_length
+            if next_marker in UNHANDLED_MARKERS:
+                print("This bin file contains unhandled markers")
+                return None, None
+
+            if next_marker == END_OF_MESSAGE_MARKER:
+                break
+
+            message += next_marker
+            message_size += next_marker_length
+            if next_marker != START_OF_PACKET_MARKER:
+                # These are not the bytes we're looking for.
+                continue
+
+            # The next 8 bytes are the start of the 24 byte start of packet marker.
+            # 16 bytes for the packet markers for the other 2 lanes
+            # plus 3 32-byte headers
+            packet_header = bytearray(16 + (LANES*HEADER_BYTES))
+
+            header_length = buf.readinto(packet_header)
+            assert packet_header[0:16] == START_OF_PACKET_MARKER + START_OF_PACKET_MARKER
+            if header_length != (16+(LANES*HEADER_BYTES)):
+                print('Message is broken: the packet header is incomplete')
+                blank_end_of_message = bytearray(24*8)
+                blank_eom_obj = mblb.mblb_EOM(blank_end_of_message)
+                self.__add_record(som_obj, blank_eom_obj)
+
+                self._bytes_read += bytes_read + message_size
+                return next_marker, som_obj
+            sop_obj = mblb.mblb_Packet(packet_header[16:(16+(LANES*HEADER_BYTES))])
+
+            packet_size = int(4*(som_obj.Dwell*(1280/(2**sop_obj.Rx_config))*n_dwells))
+
+            packet_data = bytearray(packet_size)
+            data_length = buf.readinto(packet_data)
+            if data_length != packet_size:
+                print('Message is broken: the packet data is incomplete')
+                blank_end_of_message = bytearray(eom_length*8)
+                blank_eom_obj = mblb.mblb_EOM(blank_end_of_message)
+                self.__add_record(som_obj, blank_eom_obj)
+
+                self._bytes_read += bytes_read + message_size
+                return next_marker, som_obj
+
+            message += packet_header + packet_data
+            message_size += header_length + data_length
 
         #Read the EOM markers for the other 2 lanes
         eom_marker = bytearray(16)
         buf.readinto(eom_marker)
-        assert eom_marker == bytes.fromhex('F27FFF7FFF7FFF7FF27FFF7FFF7FFF7F')
+        assert eom_marker == END_OF_MESSAGE_MARKER + END_OF_MESSAGE_MARKER
         #EOM is 24 8-byte WORDS
         end_of_message = bytearray(eom_length*8)
         buf.readinto(end_of_message)
