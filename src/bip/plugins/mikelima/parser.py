@@ -20,6 +20,8 @@ UNHANDLED_MARKERS = [bytes.fromhex('F37FFF7FFF7FFF7F'),
                     bytes.fromhex('F87FFF7FFF7FFF7F'),
                     bytes.fromhex('F97FFF7FFF7FFF7F'),
                     bytes.fromhex('FA7FFF7FFF7FFF7F')]
+END_OF_MESSAGE_MARKER = bytes.fromhex('F27FFF7FFF7FFF7F')
+START_OF_PACKET_MARKER = bytes.fromhex('F17FFF7FFF7FFF7F')
 LANES = 3
 MARKER_BYTES = 8
 HEADER_BYTES = 32
@@ -57,16 +59,13 @@ class Parser:
         self._message_index = 0
         self._message_key = ''
         self._timestamp = 0
-        self._IQ_type = 0
+        self._iq_type = 0
         self._session_id = 0
         self._increment = 0
         self._timestamp_from_filename = 0
 
-        self._EOM_length = IQ0_EOM_BYTES
+        self._eom_length = IQ0_EOM_BYTES
         self._closed = False
-
-        if not data_recorder:
-            data_recorder = Recorder
 
     @property
     def metadata(self) -> dict:
@@ -89,7 +88,7 @@ class Parser:
     def packets_read(self) -> int:
         return self._packets_read
 
-    def initialize_message_processor(self, IQ_type: int):
+    def initialize_message_processor(self, iq_type: int):
         message_data_filename = f"{MESSAGE_FILENAME}.{self._recorder.extension()}"
 
         self.message_processor = Process_Message(
@@ -97,7 +96,7 @@ class Parser:
                 self._recorder,
                 options = self._recorder_options,
                 batch_size = 10,
-                IQ_type = IQ_type)
+                iq_type = iq_type)
         self.options["message_data"] = {
                 "filename": message_data_filename
         } | self.message_processor.metadata
@@ -108,92 +107,109 @@ class Parser:
             options=self._recorder_options,
             batch_size=10)
 
+
+    def close_recorder(self):
+        if self.message_recorder != None:
+            self.message_recorder.close()
+
+
     def read_message(self, buf: RawIOBase):
         '''
         Take in 1 64-bit word at a time, looking for EOM marker
-        return the bytearray of the entire message.
+
+        Returns the bytearray of the entire message and the start of message
+        object.
+
         Will raise exception if we encounter any of the unhandled markers
         '''
         header_data, bytes_read = header.read_message_header(buf) # Bytearray and integer
         if bytes_read == 0:
-            if self.message_recorder.writer != None:
-                self.message_recorder.close()
+            self.close_recorder()
             return None, None
 
-        SOM_obj = mblb.mblb_SOM(header_data, self._timestamp, self._IQ_type, self._session_id, self._increment, self._timestamp_from_filename)
-        self._message_key = SOM_obj.message_key
+        som_obj = mblb.mblb_SOM(header_data, self._timestamp, self._iq_type, self._session_id, self._increment, self._timestamp_from_filename)
+        self._message_key = som_obj.message_key
 
         message = bytearray(8)
         message_size = buf.readinto(message)
 
+        n_dwells = 2
+        eom_length = IQ0_EOM_BYTES
+
+        if self._iq_type == 5:
+            n_dwells = 3
+            eom_length = IQ5_EOM_BYTES
+
         # Look for SOP not EOM
         # read packet size of packet
-        while message[-8:] != bytes.fromhex('F27FFF7FFF7FFF7F'):
-            if message[-8:] == bytes.fromhex('F17FFF7FFF7FFF7F'):
+        # While the last 8 bytes read are not the start of the 24 byte end of message marker.
+        while message[-8:] != END_OF_MESSAGE_MARKER:
+            # If the next 8 bytes are the start of the 24 byte start of packet marker.
+            if message[-8:] == START_OF_PACKET_MARKER:
                 #16 bytes for the packet markers for the other 2 lanes
                 #plus 3 32-byte headers
                 packet_header = bytearray(16 + (LANES*HEADER_BYTES))
 
                 header_length = buf.readinto(packet_header)
                 if header_length != (16+(LANES*HEADER_BYTES)):
-                    print('Message is broken in the packet header')
+                    print('Message is broken: the packet header is incomplete')
                     blank_end_of_message = bytearray(24*8)
-                    blank_EOM_obj = mblb.mblb_EOM(blank_end_of_message)
-                    self.__add_record(SOM_obj, blank_EOM_obj)
+                    blank_eom_obj = mblb.mblb_EOM(blank_end_of_message)
+                    self.__add_record(som_obj, blank_eom_obj)
 
                     self._bytes_read += bytes_read + message_size
-                    return message[:-8], SOM_obj
-                SOP_obj = mblb.mblb_Packet(packet_header[16:(16+(LANES*HEADER_BYTES))])
+                    return message[:-8], som_obj
+                sop_obj = mblb.mblb_Packet(packet_header[16:(16+(LANES*HEADER_BYTES))])
 
-                if self._IQ_type == 5:
-                    packet_size = int(4*(SOM_obj.Dwell*(1280/(2**SOP_obj.Rx_config))*3))
-                else:
-                    packet_size = int(4*(SOM_obj.Dwell*(1280/(2**SOP_obj.Rx_config))*2))
+                packet_size = int(4*(som_obj.Dwell*(1280/(2**sop_obj.Rx_config))*n_dwells))
 
                 packet_data = bytearray(packet_size)
                 data_length = buf.readinto(packet_data)
                 if data_length != packet_size:
-                    print('Message is broken in the packet data')
-                    blank_end_of_message = bytearray(self._EOM_length*8)
-                    blank_EOM_obj = mblb.mblb_EOM(blank_end_of_message)
-                    self.__add_record(SOM_obj, blank_EOM_obj)
+                    print('Message is broken: the packet data is incomplete')
+                    blank_end_of_message = bytearray(eom_length*8)
+                    blank_eom_obj = mblb.mblb_EOM(blank_end_of_message)
+                    self.__add_record(som_obj, blank_eom_obj)
 
                     self._bytes_read += bytes_read + message_size
-                    return message[:-8], SOM_obj
+                    return message[:-8], som_obj
 
                 message += packet_header + packet_data
                 message_size += header_length + data_length
 
+            # Look at the next 8 bytes of the message to get to the next
+            # message marker.
             additional_message = bytearray(8)
             additional_message_length = buf.readinto(additional_message)
 
             if additional_message in UNHANDLED_MARKERS:
-                raise Exception('This Bin file contains unhandled markers')
+                print("This bin file contains unhandled markers")
+                return None, None
             if additional_message_length != 8:
-                print('Message is broken no EOM found')
-                blank_end_of_message = bytearray(self._EOM_length*8)
-                blank_EOM_obj = mblb.mblb_EOM(blank_end_of_message)
-                self.__add_record(SOM_obj, blank_EOM_obj)
+                print('Message is broken: no EOM found')
+                blank_end_of_message = bytearray(eom_length*8)
+                blank_eom_obj = mblb.mblb_EOM(blank_end_of_message)
+                self.__add_record(som_obj, blank_eom_obj)
 
                 self._bytes_read += bytes_read + message_size
-                return message, SOM_obj
+                return message, som_obj
 
             message += additional_message
             message_size += additional_message_length
 
         #Read the EOM markers for the other 2 lanes
-        EOM_marker = bytearray(16)
-        buf.readinto(EOM_marker)
-        assert EOM_marker == bytes.fromhex('F27FFF7FFF7FFF7FF27FFF7FFF7FFF7F')
+        eom_marker = bytearray(16)
+        buf.readinto(eom_marker)
+        assert eom_marker == bytes.fromhex('F27FFF7FFF7FFF7FF27FFF7FFF7FFF7F')
         #EOM is 24 8-byte WORDS
-        end_of_message = bytearray(self._EOM_length*8)
+        end_of_message = bytearray(eom_length*8)
         buf.readinto(end_of_message)
-        EOM_obj = mblb.mblb_EOM(end_of_message)
+        eom_obj = mblb.mblb_EOM(end_of_message)
 
-        self.__add_record(SOM_obj, EOM_obj)
+        self.__add_record(som_obj, eom_obj)
 
-        self._bytes_read += bytes_read + message_size + 16 + (self._EOM_length*8)
-        return message[:-8], SOM_obj
+        self._bytes_read += bytes_read + message_size + 16 + (eom_length*8)
+        return message[:-8], som_obj
 
     def __add_record(self,
             message: mblb.mblb_SOM,
@@ -254,29 +270,26 @@ class Parser:
         if progress_bar is not None:
             last_read = 0
 
-        num_bytes_read, orphan_packet_list, self._timestamp, self._IQ_type, self._session_id, self._increment, self._timestamp_from_filename = header.read_first_header(stream)
+        num_bytes_read, orphan_packet_list, self._timestamp, self._iq_type, self._session_id, self._increment, self._timestamp_from_filename = header.read_first_header(stream)
 
-        if self._IQ_type == 5:
-            self._EOM_length = IQ5_EOM_BYTES
+        if self._iq_type == 5:
+            self._eom_length = IQ5_EOM_BYTES
 
-        self.initialize_message_processor(self._IQ_type)
+        self.initialize_message_processor(self._iq_type)
 
         self._bytes_read += num_bytes_read
 
-        orphan_packet_number = self.message_processor.process_orphan_packets(orphan_packet_list, self._IQ_type, self._session_id, self._increment, self._timestamp_from_filename)
+        self.message_processor.process_orphan_packets(orphan_packet_list, self._iq_type, self._session_id, self._increment, self._timestamp_from_filename)
 
-        msg_words, SOM_obj = self.read_message(stream) #bytearray of the whole message
+        msg_words, som_obj = self.read_message(stream) #bytearray of the whole message
         while msg_words:
 
-            num_packets = self.message_processor.process_msg(msg_words, SOM_obj) # break into packets
+            num_packets = self.message_processor.process_msg(msg_words, som_obj) # break into packets
             self._messages_read += 1
             self._packets_read += num_packets
             if progress_bar is not None:
                 progress_bar.update(self._bytes_read - last_read)
                 last_read = self._bytes_read
 
-            try:
-                msg_words, SOM_obj = self.read_message(stream)
-            except:
-                msg_words = None
+            msg_words, som_obj = self.read_message(stream)
 
