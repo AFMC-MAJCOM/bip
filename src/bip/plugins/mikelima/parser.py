@@ -163,6 +163,8 @@ class Parser:
             if next_marker == END_OF_MESSAGE_MARKER:
                 break
 
+            message += next_marker
+            message_size += next_marker_length
             if next_marker != START_OF_PACKET_MARKER:
                 # These are not the bytes we're looking for.
                 continue
@@ -197,8 +199,6 @@ class Parser:
                 self._bytes_read += bytes_read + message_size
                 return next_marker, som_obj
 
-            message += next_marker
-            message_size += next_marker_length
             message += packet_header + packet_data
             message_size += header_length + data_length
 
