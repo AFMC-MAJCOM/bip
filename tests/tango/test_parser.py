@@ -45,7 +45,7 @@ def test_bad_header_no_vrlp():
 
         parser = Parser(Path(), Path(), DummyWriter, logging.WARNING)
         with pytest.raises(RuntimeError):
-            payload = parser.read_packet(f)
+            parser.read_packet(f)
 
 
 def test_bad_header_no_vend():
@@ -56,7 +56,7 @@ def test_bad_header_no_vend():
         f.seek(0)
 
         parser = Parser(Path(), Path(), DummyWriter, logging.WARNING)
-        payload, size = parser.read_packet(f)
+        payload, _ = parser.read_packet(f)
 
         assert payload == "BAD_PACKET"
 
@@ -67,7 +67,7 @@ def test_bad_header_short():
 
         parser = Parser(Path(), Path(), DummyWriter, logging.WARNING)
         with pytest.raises(RuntimeError):
-            payload = parser.read_packet(f)
+            parser.read_packet(f)
 
 def test_read_custom_packet_empty():
     parser = Parser(Path(), Path(), DummyWriter, logging.WARNING)

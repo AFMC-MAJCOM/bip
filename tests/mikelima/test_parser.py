@@ -30,7 +30,7 @@ def fake_file():
 
 
 @pytest.fixture
-def fake_file_no_EOM():
+def fake_file_no_eom():
     f = io.BytesIO()
     f.write(bytes.fromhex('F07FFF7FFF7FFF7FF07FFF7FFF7FFF7FF07FFF7FFF7FFF7F')) #SOM Markers
     f.write(struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12)) #SOM Header
@@ -68,12 +68,12 @@ def fake_file_unhandled_markers():
 
 def test_read_message(fake_file):
     parser =  Parser(Path(), Path(), DummyWriter)
-    IQ_type = 2
+    iq_type = 2
     session_id = 15
     increment = 4
     timestamp_from_filename = 19411207120000
-    parser.initialize_message_processor(IQ_type)
-    payload, SOM_obj = parser.read_message(fake_file)
+    parser.initialize_message_processor(iq_type)
+    payload, som_obj = parser.read_message(fake_file)
 
     a = bytes.fromhex('F17FFF7FFF7FFF7FF17FFF7FFF7FFF7FF17FFF7FFF7FFF7F') #SOP Markers
     b = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SOP Header
@@ -86,29 +86,28 @@ def test_read_message(fake_file):
 
     assert payload == expected_payload
 
-    fake_SOM_obj = bytearray(36*8)
     d = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SOM Header
     e = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SWDefined Words
     f = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SWDefinedWords
-    fake_SOM_obj = d+e+f
+    fake_som_obj = d+e+f
 
     timestamp = 0
-    expected_SOM_obj = mb.mblb_SOM(fake_SOM_obj, timestamp, IQ_type, session_id, increment, timestamp_from_filename)
+    expected_som_obj = mb.MblbSOM(fake_som_obj, timestamp, iq_type, session_id, increment, timestamp_from_filename)
 
-    assert type(SOM_obj) == type(expected_SOM_obj)
-    assert SOM_obj.freq_GHz == expected_SOM_obj.freq_GHz
+    assert type(som_obj) == type(expected_som_obj)
+    assert som_obj.freq_ghz == expected_som_obj.freq_ghz
 
 
 
-def test_broken_message(fake_file_no_EOM):
+def test_broken_message(fake_file_no_eom):
     parser =  Parser(Path(), Path(), DummyWriter)
-    IQ_type = 2
+    iq_type = 2
     session_id = 15
     increment = 4
     timestamp_from_filename = 19411207120000
 
-    parser.initialize_message_processor(IQ_type)
-    payload, SOM_obj = parser.read_message(fake_file_no_EOM)
+    parser.initialize_message_processor(iq_type)
+    payload, som_obj = parser.read_message(fake_file_no_eom)
 
     a = bytes.fromhex('F17FFF7FFF7FFF7FF17FFF7FFF7FFF7FF17FFF7FFF7FFF7F') #SOP Markers
     b = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 0x0000006000000000, 5, 6, 7, 8 , 9, 10, 11, 12) #SOP Header
@@ -121,17 +120,16 @@ def test_broken_message(fake_file_no_EOM):
 
     assert payload == expected_payload
 
-    fake_SOM_obj = bytearray(36*8)
     d = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SOM Header
     e = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SWDefined Words
     f = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SWDefinedWords
-    fake_SOM_obj = d+e+f
+    fake_som_obj = d+e+f
 
     timestamp = 0
-    expected_SOM_obj = mb.mblb_SOM(fake_SOM_obj, timestamp, IQ_type, session_id, increment, timestamp_from_filename)
+    expected_som_obj = mb.MblbSOM(fake_som_obj, timestamp, iq_type, session_id, increment, timestamp_from_filename)
 
-    assert type(SOM_obj) == type(expected_SOM_obj)
-    assert SOM_obj.freq_GHz == expected_SOM_obj.freq_GHz
+    assert type(som_obj) == type(expected_som_obj)
+    assert som_obj.freq_ghz == expected_som_obj.freq_ghz
 
 
 def test_bad_message_unhandled_markers(fake_file_unhandled_markers):

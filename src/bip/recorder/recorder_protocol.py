@@ -10,6 +10,9 @@ class Recorder(Protocol):
             schema: pa.Schema,
             options: dict = {}
             ):
+        """
+        Records packets.
+        """
         pass
 
     @staticmethod

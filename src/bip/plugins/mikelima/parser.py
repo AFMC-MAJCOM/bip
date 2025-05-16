@@ -9,7 +9,7 @@ from bip import non_vita
 
 from . __version__ import __version__ as version
 from . import header
-from . message_data import Process_Message
+from . message_data import ProcessMessage
 from . import message_data
 from bip.non_vita import mblb
 
@@ -91,7 +91,7 @@ class Parser:
     def initialize_message_processor(self, iq_type: int):
         message_data_filename = f"{MESSAGE_FILENAME}.{self._recorder.extension()}"
 
-        self.message_processor = Process_Message(
+        self.message_processor = ProcessMessage(
                 self._output_path,
                 self._recorder,
                 options = self._recorder_options,
@@ -127,7 +127,7 @@ class Parser:
             self.close_recorder()
             return None, None
 
-        som_obj = mblb.mblb_SOM(header_data, self._timestamp, self._iq_type, self._session_id, self._increment, self._timestamp_from_filename)
+        som_obj = mblb.MblbSOM(header_data, self._timestamp, self._iq_type, self._session_id, self._increment, self._timestamp_from_filename)
         self._message_key = som_obj.message_key
 
         message = bytearray(0)
@@ -150,7 +150,7 @@ class Parser:
             if next_marker_length != 8:
                 print('Message is broken: no EOM found')
                 blank_end_of_message = bytearray(eom_length*8)
-                blank_eom_obj = mblb.mblb_EOM(blank_end_of_message)
+                blank_eom_obj = mblb.MblbEOM(blank_end_of_message)
                 self.__add_record(som_obj, blank_eom_obj)
 
                 self._bytes_read += bytes_read + message_size
@@ -179,21 +179,21 @@ class Parser:
             if header_length != (16+(LANES*HEADER_BYTES)):
                 print('Message is broken: the packet header is incomplete')
                 blank_end_of_message = bytearray(24*8)
-                blank_eom_obj = mblb.mblb_EOM(blank_end_of_message)
+                blank_eom_obj = mblb.MblbEOM(blank_end_of_message)
                 self.__add_record(som_obj, blank_eom_obj)
 
                 self._bytes_read += bytes_read + message_size
                 return next_marker, som_obj
-            sop_obj = mblb.mblb_Packet(packet_header[16:(16+(LANES*HEADER_BYTES))])
+            sop_obj = mblb.MblbPacket(packet_header[16:(16+(LANES*HEADER_BYTES))])
 
-            packet_size = int(4*(som_obj.Dwell*(1280/(2**sop_obj.Rx_config))*n_beams))
+            packet_size = int(4*(som_obj.dwell*(1280/(2**sop_obj.rx_config))*n_beams))
 
             packet_data = bytearray(packet_size)
             data_length = buf.readinto(packet_data)
             if data_length != packet_size:
                 print('Message is broken: the packet data is incomplete')
                 blank_end_of_message = bytearray(eom_length*8)
-                blank_eom_obj = mblb.mblb_EOM(blank_end_of_message)
+                blank_eom_obj = mblb.MblbEOM(blank_end_of_message)
                 self.__add_record(som_obj, blank_eom_obj)
 
                 self._bytes_read += bytes_read + message_size
@@ -209,7 +209,7 @@ class Parser:
         #EOM is 24 8-byte WORDS
         end_of_message = bytearray(eom_length*8)
         buf.readinto(end_of_message)
-        eom_obj = mblb.mblb_EOM(end_of_message)
+        eom_obj = mblb.MblbEOM(end_of_message)
 
         self.__add_record(som_obj, eom_obj)
 
@@ -217,51 +217,51 @@ class Parser:
         return message, som_obj
 
     def __add_record(self,
-            message: mblb.mblb_SOM,
-            end: mblb.mblb_EOM
+            message: mblb.MblbSOM,
+            end: mblb.MblbEOM
             ):
         '''
         Add a row to the message_content parquet
         '''
-        assert isinstance(message, mblb.mblb_SOM)
-        assert isinstance(end, mblb.mblb_EOM)
+        assert isinstance(message, mblb.MblbSOM)
+        assert isinstance(end, mblb.MblbEOM)
 
         self.message_recorder.add_record({
-            "IQ_type": np.uint8(message.IQ_type),
+            "IQ_type": np.uint8(message.iq_type),
             "session_id": np.uint8(message.session_id),
             "increment": np.uint32(message.increment),
             "timestamp_from_filename": np.uint64(message.timestamp_from_filename),
-            "SOM_lane1_id": np.uint8(message.lane1_ID),
-            "SOM_lane2_id": np.uint8(message.lane2_ID),
-            "SOM_lane3_id": np.uint8(message.lane3_ID),
-            "CI_number": np.uint32(message.CI_number),
+            "SOM_lane1_id": np.uint8(message.lane1_id),
+            "SOM_lane2_id": np.uint8(message.lane2_id),
+            "SOM_lane3_id": np.uint8(message.lane3_id),
+            "CI_number": np.uint32(message.ci_number),
             "message_key": str(message.message_key),
             "SOM_message_number": np.uint8(message.message_number),
-            "SOM_SI_number": np.uint8(message.SI_number),
+            "SOM_SI_number": np.uint8(message.si_number),
             "SOM_path_id": np.uint8(message.path_id),
             "SOM_path_width": np.uint8(message.path_width),
             "SOM_subpath_id": np.uint8(message.subpath_id),
             "SOM_subpath_width": np.uint8(message.subpath_width),
-            "BE": np.uint8(message.BE),
+            "BE": np.uint8(message.be),
             "Beam_select": np.uint8(message.beam_select),
-            "AFS_mode": np.uint8(message.AFS_mode),
+            "AFS_mode": np.uint8(message.afs_mode),
             "High_gain": np.uint32(message.high_gain),
-            "Schedule_number": np.uint16(message.SchedNum),
-            "SI_in_schedule_number": np.uint16(message.SIinSchedNum),
-            "Event_start_time": np.uint64(message.EventStartTime_us),
-            "message_time": np.uint64(message.Time_since_epoch_us),
-            "BTI_length": np.uint32(message.BTI_length),
-            "Dwell": np.uint32(message.Dwell),
-            "Frequency_Message": np.float32(message.freq_GHz),
+            "Schedule_number": np.uint16(message.sched_num),
+            "SI_in_schedule_number": np.uint16(message.si_in_sched_num),
+            "Event_start_time": np.uint64(message.event_start_time_us),
+            "message_time": np.uint64(message.time_since_epoch_us),
+            "BTI_length": np.uint32(message.bti_length),
+            "Dwell": np.uint32(message.dwell),
+            "Frequency_Message": np.float32(message.freq_ghz),
             "Packet_Count": np.uint16(end.packet_count),
-            "EOM_CI_number": np.uint32(end.CI_number),
+            "EOM_CI_number": np.uint32(end.ci_number),
             "Error_status": np.uint64(end.error_status),
             "EOM_message_number": np.uint16(end.message_number),
-            "SubCCI_number": np.uint16(end.subCCI_number),
-            "CRC": np.uint64(end.CRC),
-            "EOM_lane1_id": np.uint16(end.lane1_ID),
-            "EOM_lane2_id": np.uint16(end.lane2_ID),
-            "EOM_lane3_id": np.uint16(end.lane3_ID),
+            "SubCCI_number": np.uint16(end.sub_cci_number),
+            "CRC": np.uint64(end.crc),
+            "EOM_lane1_id": np.uint16(end.lane1_id),
+            "EOM_lane2_id": np.uint16(end.lane2_id),
+            "EOM_lane3_id": np.uint16(end.lane3_id),
             "EOM_path_id": np.uint16(end.path_id),
             "EOM_path_width": np.uint16(end.path_width),
             "EOM_subpath_id": np.uint8(end.subpath_id),

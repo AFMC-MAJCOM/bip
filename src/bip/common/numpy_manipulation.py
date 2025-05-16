@@ -24,7 +24,6 @@ def find_subarray_indexes_numba(array, subarray):
     match_length = 0
     sub_len = len(subarray)
     array_len = len(array)
-    stop = array_len - sub_len
     indexes = []
 
     while array_idx < array_len:
