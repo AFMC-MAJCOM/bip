@@ -6,6 +6,12 @@ import numpy as np
 
 from bip.vita import ContextPacket
 
+UNIT_ANGLE = "rad"
+UNIT_ANGLE_VEL = "rad/s"
+UNIT_LEN = "m"
+UNIT_VEL = "m/s"
+UNIT_ACCEL = "m/s/s"
+
 _schema = [
     ("packet_id", pa.uint32(),None),
 
@@ -25,25 +31,25 @@ _schema = [
     ("filter_status", pa.list_(pa.uint16(), -1), None),
     ("unix_time_seconds", pa.list_(pa.uint32(), -1), "sec"),
     ("microseconds", pa.list_(pa.uint32(), -1), "usec"),
-    ("latitude", pa.list_(pa.float64(), -1), "rad"),
-    ("longitude", pa.list_(pa.float64(), -1), "rad"),
-    ("altitude", pa.list_(pa.float64(), -1), "m"),
-    ("velocity_0", pa.list_(pa.float32(), -1), "m/s"),
-    ("velocity_1", pa.list_(pa.float32(), -1), "m/s"),
-    ("velocity_2", pa.list_(pa.float32(), -1), "m/s"),
-    ("acceleration_0", pa.list_(pa.float32(), -1), "m/s/s"),
-    ("acceleration_1", pa.list_(pa.float32(), -1), "m/s/s"),
-    ("acceleration_2", pa.list_(pa.float32(), -1), "m/s/s"),
+    ("latitude", pa.list_(pa.float64(), -1), UNIT_ANGLE),
+    ("longitude", pa.list_(pa.float64(), -1), UNIT_ANGLE),
+    ("altitude", pa.list_(pa.float64(), -1), UNIT_LEN),
+    ("velocity_0", pa.list_(pa.float32(), -1), UNIT_VEL),
+    ("velocity_1", pa.list_(pa.float32(), -1), UNIT_VEL),
+    ("velocity_2", pa.list_(pa.float32(), -1), UNIT_VEL),
+    ("acceleration_0", pa.list_(pa.float32(), -1), UNIT_ACCEL),
+    ("acceleration_1", pa.list_(pa.float32(), -1), UNIT_ACCEL),
+    ("acceleration_2", pa.list_(pa.float32(), -1), UNIT_ACCEL),
     ("gforce", pa.list_(pa.float32(), -1), "g"),
-    ("attitude_0", pa.list_(pa.float32(), -1), "rad"),
-    ("attitude_1", pa.list_(pa.float32(), -1), "rad"),
-    ("attitude_2", pa.list_(pa.float32(), -1), "rad"),
-    ("attitude_rate_0", pa.list_(pa.float32(), -1), "rad/s"),
-    ("attitude_rate_1", pa.list_(pa.float32(), -1), "rad/s"),
-    ("attitude_rate_2", pa.list_(pa.float32(), -1), "rad/s"),
-    ("latitude_std_dev", pa.list_(pa.float32(), -1), "m"),
-    ("longitude_std_dev", pa.list_(pa.float32(), -1), "m"),
-    ("altitude_std_dev", pa.list_(pa.float32(), -1), "m"),
+    ("attitude_0", pa.list_(pa.float32(), -1), UNIT_ANGLE),
+    ("attitude_1", pa.list_(pa.float32(), -1), UNIT_ANGLE),
+    ("attitude_2", pa.list_(pa.float32(), -1), UNIT_ANGLE),
+    ("attitude_rate_0", pa.list_(pa.float32(), -1), UNIT_ANGLE_VEL),
+    ("attitude_rate_1", pa.list_(pa.float32(), -1), UNIT_ANGLE_VEL),
+    ("attitude_rate_2", pa.list_(pa.float32(), -1), UNIT_ANGLE_VEL),
+    ("latitude_std_dev", pa.list_(pa.float32(), -1), UNIT_LEN),
+    ("longitude_std_dev", pa.list_(pa.float32(), -1), UNIT_LEN),
+    ("altitude_std_dev", pa.list_(pa.float32(), -1), UNIT_LEN),
 
     ("frame_index", pa.uint32(),None),
     ("packet_index", pa.uint32(),None),
