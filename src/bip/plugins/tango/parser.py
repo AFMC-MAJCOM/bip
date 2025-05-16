@@ -221,16 +221,34 @@ class Parser:
             return new_payload
         return payload
 
+
+    def clean_deadbeef_for_packet(self, buf:RawIOBase, payload: bytearray, expected_size : int):
+            total_payload_diff = 0
+            payload = self.remove_deadbeef(payload)
+
+            # If some dead beef was removed, we need to read in more data
+            while (len(payload) != expected_size):
+                self.logger.info("Grabbing more data due to removal of DEADBEEF...")
+                payload_diff = expected_size - len(payload)
+                total_payload_diff += payload_diff
+                additional_payload = bytearray(payload_diff)
+                buf.readinto(additional_payload)
+                payload.extend(additional_payload)
+                payload = self.remove_deadbeef(payload)
+
+            return payload, total_payload_diff
+
+
+    def close_recorder(self):
+        if self.frame_recorder.writer != None:
+            self.frame_recorder.close()
+
+
     def read_packet(self, buf: RawIOBase):
         bytes_read, header = frame.read_header(buf)
-        if bytes_read == 0:
-            if self.frame_recorder.writer != None:
-                self.frame_recorder.close()
+        if bytes_read == 0 or header == (0, 0):
+            self.close_recorder()
             return None, None
-        elif header == (0, 0):
-            if self.frame_recorder.writer != None:
-                self.frame_recorder.close()
-            return None,None
 
         self._frame_count = header[0]
         self._frame_size = np.uint32(header[1])
@@ -245,20 +263,11 @@ class Parser:
         payload_size_bytes = buf.readinto(payload)
 
         total_payload_diff = 0
-        if (self.clean):
-            payload = self.remove_deadbeef(payload)
-            # If some dead beef was removed, we need to read in more data
-            while (len(payload) != expected_size):
-                self.logger.info("Grabbing more data due to removal of DEADBEEF...")
-                payload_diff = expected_size - len(payload)
-                total_payload_diff += payload_diff
-                additional_payload = bytearray(payload_diff)
-                buf.readinto(additional_payload)
-                payload.extend(additional_payload)
-                payload = self.remove_deadbeef(payload)
-
+        if self.clean:
+            payload, total_payload_diff = self.clean_deadbeef_for_packet(buf, payload, expected_size)
 
         if payload[-4:] == bytes("DNEV", encoding="ascii"):
+            # This is a well-formed packet.
             self.logger.info("Found end of Frame, everything is normal...")
             self.frame_recorder.add_record({
                 "frame_count": np.uint32(self._frame_count),
@@ -271,59 +280,57 @@ class Parser:
             #leave off VEND
             return payload[:-4], payload_size_words - 1
 
-        else:  # its a bad packet
-            ''' From here we know the packet_size is wrong
-            There are 3 possibilities
-            1: We are at the end of the file
-            2: Packet_size is too small
-            3: packet_size is too large'''
+        # This is a bad packet.
+        ''' From here we know the packet_size is wrong
+        There are 3 possibilities
+        1: We are at the end of the file
+        2: Packet_size is too small
+        3: packet_size is too large'''
 
-            premature_ending = payload.find(b'DNEV')
-            #This checks if we're at the end of the file
-            if payload_size_bytes != expected_size:
-                self._bytes_read += (bytes_read + payload_size_bytes + total_payload_diff)
-                payload = payload[:payload_size_bytes]
-                reason = f"incomplete read {payload_size_bytes}/{expected_size} bytes"
-                if self.frame_recorder.writer != None:
-                    self.frame_recorder.close()
-                self.logger.warning(f"incomplete read {payload_size_bytes}/{expected_size} bytes")
+        premature_ending = payload.find(b'DNEV')
+        #This checks if we're at the end of the file
+        if payload_size_bytes != expected_size:
+            self._bytes_read += (bytes_read + payload_size_bytes + total_payload_diff)
+            payload = payload[:payload_size_bytes]
+            reason = f"incomplete read {payload_size_bytes}/{expected_size} bytes"
+            self.close_recorder()
+            self.logger.warning(f"incomplete read {payload_size_bytes}/{expected_size} bytes")
 
-            #This checks if packet_size is too large
-            elif premature_ending != -1:
-                self.logger.info("Found DNEV within payload, cutting the payload short to match this.")
-                buf.seek(starting_location)
-                reason = "Found DNEV within payload, frame size given is larger than actual frame size."
-                new_payload = bytearray(premature_ending + 4)
-                new_payload_size_bytes = buf.readinto(new_payload)
-                new_payload_size_words = int(premature_ending / 4) + 1
-                self._bytes_read += (bytes_read + total_payload_diff + new_payload_size_bytes)
-                payload = new_payload
+        #This checks if packet_size is too large
+        elif premature_ending != -1:
+            self.logger.info("Found DNEV within payload, cutting the payload short to match this.")
+            buf.seek(starting_location)
+            reason = "Found DNEV within payload, frame size given is larger than actual frame size."
+            new_payload = bytearray(premature_ending + 4)
+            new_payload_size_bytes = buf.readinto(new_payload)
+            self._bytes_read += (bytes_read + total_payload_diff + new_payload_size_bytes)
+            payload = new_payload
 
-            else:
-                reason = "Could not find DNEV trailer, frame size given does not match data"
-                # If packet_size is too small it's very annoying so true.
-                while payload[-4:] != bytes("DNEV", encoding="ascii"):
-                    buffer_payload = bytearray(4)
-                    buffer_size = buf.readinto(buffer_payload)
+        else:
+            reason = "Could not find DNEV trailer, frame size given does not match data"
+            # If packet_size is too small it's very annoying so true.
+            while payload[-4:] != bytes("DNEV", encoding="ascii"):
+                buffer_payload = bytearray(4)
+                buffer_size = buf.readinto(buffer_payload)
 
-                    if buffer_size == 0:
-                        self.logger.warning("Last packet has incorrect packet_size")
-                        break
+                if buffer_size == 0:
+                    self.logger.warning("Last packet has incorrect packet_size")
+                    break
 
-                    payload_size_bytes += 4
-                    payload += buffer_payload
-                self._bytes_read += (bytes_read + payload_size_bytes + total_payload_diff)
+                payload_size_bytes += 4
+                payload += buffer_payload
+            self._bytes_read += (bytes_read + payload_size_bytes + total_payload_diff)
 
-            self.bad_packets_recorder.add_record({
-                "frame_count": np.uint32(self._frame_count),
-                "frame_size": np.uint32(self._frame_size),
-                "start_bytes": np.uint64(self._start_bytes),
-                "frame_index": np.uint32(self._frames_read),
-                "bytes": np.frombuffer(payload, count = -1, dtype=np.uint32),
-                "reason": reason,
-            })
-            self._bad_packets += 1
-            return BAD_PACKET_STATUS_CODE, None
+        self.bad_packets_recorder.add_record({
+            "frame_count": np.uint32(self._frame_count),
+            "frame_size": np.uint32(self._frame_size),
+            "start_bytes": np.uint64(self._start_bytes),
+            "frame_index": np.uint32(self._frames_read),
+            "bytes": np.frombuffer(payload, count = -1, dtype=np.uint32),
+            "reason": reason,
+        })
+        self._bad_packets += 1
+        return BAD_PACKET_STATUS_CODE, None
 
 
     def process_packet(self, packet_type: int, class_id: int, payload: bytes, payload_size: int):
