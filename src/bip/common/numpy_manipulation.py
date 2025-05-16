@@ -12,7 +12,7 @@ def find_subarray_indexes_numpy(array, subarray):
     Finds all starting indexes where `array` equals `subarray`.
     """
     temp = rolling_window(array, len(subarray))
-    result = np.where(np.all(temp == subarray, axis=1))
+    result = np.nonzero(np.all(temp == subarray, axis=1))
     return result[0] if result else None
 
 @numba.jit(nopython=True)
