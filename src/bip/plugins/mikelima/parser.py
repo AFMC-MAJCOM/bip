@@ -183,7 +183,7 @@ class Parser:
                 self.__add_record(som_obj, blank_eom_obj)
 
                 self._bytes_read += bytes_read + message_size
-                return next_marker, som_obj
+                return message[:-8], som_obj
             sop_obj = mblb.MblbPacket(packet_header[16:(16+(LANES*HEADER_BYTES))])
 
             packet_size = int(4*(som_obj.dwell*(1280/(2**sop_obj.rx_config))*n_beams))
@@ -197,7 +197,7 @@ class Parser:
                 self.__add_record(som_obj, blank_eom_obj)
 
                 self._bytes_read += bytes_read + message_size
-                return next_marker, som_obj
+                return message[:-8], som_obj
 
             message += packet_header + packet_data
             message_size += header_length + data_length
