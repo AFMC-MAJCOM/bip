@@ -1,5 +1,6 @@
 import struct
 from io import RawIOBase
+from typing import Tuple
 
 import pyarrow as pa
 
@@ -14,7 +15,7 @@ def unpack_header(header_bytes: bytes):
     time_msw, time_lsw, word_cnt = struct.unpack(header_fmt, header_bytes)
     return (time_msw << 32) | time_lsw, word_cnt
 
-def read_header(buf: RawIOBase) -> int:
+def read_header(buf: RawIOBase) -> Tuple[int, Tuple[int, int]]:
     header_bytes = buf.read(header_size)
     bytes_read = len(header_bytes)
     if bytes_read == 0:

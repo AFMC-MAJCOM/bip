@@ -5,6 +5,7 @@ import numpy as np
 
 from bip.vita import ExtensionCommandPacket as VitaExtensionCommandPacket
 from bip.common import bit_manipulation
+from typing import Optional
 
 
 _schema = [
@@ -108,9 +109,12 @@ class DataContext:
     def __init__(self,
             output_path: Path,
             Recorder: type,
-            recorder_opts: dict = {},
+            recorder_opts: Optional[dict] = None,
             batch_size: int = 1000,
             **kwargs):
+        if recorder_opts is None:
+            recorder_opts = {}
+
         self.options = kwargs
         self.recorder = Recorder(
                 output_path,

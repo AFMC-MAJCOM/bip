@@ -12,9 +12,12 @@ class DummyWriter:
     def __init__(self,
             filename: Path,
             schema: pa.schema,
-            options: dict = {},
+            options: dict = None,
             batch_size: int = 1000
             ):
+
+        if options is None:
+            options = {}
 
         self._closed = False
 
@@ -33,6 +36,9 @@ class DummyWriter:
         self.current_index = 0
 
     def _record(self):
+        """
+        The point of the dummy writer is that it doesn't record anything.
+        """
         pass
 
     def add_record(self, record: dict):
@@ -60,9 +66,6 @@ class DummyWriter:
         }
 
     def __del__(self):
-        try:
-            if not self._closed:
-                self.close()
-        except:
-            pass
+        if not self._closed:
+            self.close()
 

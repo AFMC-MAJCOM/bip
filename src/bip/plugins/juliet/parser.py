@@ -4,7 +4,7 @@ import traceback
 import logging
 
 import numpy as np
-import pyarrow as pa 
+import pyarrow as pa
 
 
 from bip import vita
@@ -16,9 +16,9 @@ from . ackR_packet import AckR_Packet
 from . data_context_packet import DataContext
 
 
-BAD_PACKET_STATUS_CODE = "DEADBEEF" 
+BAD_PACKET_STATUS_CODE = "DEADBEEF"
 
-BAD_PACKETS_FILENAME="bad_packets" 
+BAD_PACKETS_FILENAME="bad_packets"
 UNKNOWN_DATA_FILENAME="unknown_packets"
 FRAME_DATA_FILENAME="framing_packets"
 SIGNAL_DATA_FILENAME="data"
@@ -35,12 +35,12 @@ ACK_DATA_PACKET = 0b0100
 bad_packets_schema = pa.schema([
     ("start_bytes", pa.uint64()),
     ("bytes", pa.list_(pa.uint32(), -1)),
-])  
+])
 
 unknown_packets_schema = pa.schema([
     ("start_bytes", pa.uint64()),
     ("bytes", pa.list_(pa.uint32(), -1)),
-])  
+])
 
 class Parser:
     options: dict
@@ -53,11 +53,14 @@ class Parser:
             Recorder: type,  #class instance to be instantiated
             log_level=logging.WARNING,
             data_recorder: type = None,
-            recorder_opts: dict = {},
+            recorder_opts: dict = None,
             context_key_function=None, # TODO: Implement data partitioning
             orphan_context_key : str = "ORPHAN_DATA",
             **kwargs
             ):
+
+        if recorder_opts is None:
+            recorder_opts = {}
 
         self.options = kwargs
         self.clean = False
@@ -66,9 +69,9 @@ class Parser:
         self._bytes_read = 0
         self._packets_read = 0
 
-        self._bad_packets = 0 
-        self._unknown_packets = 0 
-        self._closed = False  
+        self._bad_packets = 0
+        self._unknown_packets = 0
+        self._closed = False
 
         framing_data_filename = f"{FRAME_DATA_FILENAME}.{Recorder.extension()}"
         self.recorder = Recorder(
@@ -88,7 +91,7 @@ class Parser:
                 batch_size = 1)
         self.options["bad_packets_data"] = {
             "filename": bad_packets_filename,
-        } | self.bad_packets_recorder.metadata 
+        } | self.bad_packets_recorder.metadata
 
         unknown_packets_filename = f"{UNKNOWN_DATA_FILENAME}.{Recorder.extension()}"
         self.unknown_packets_recorder = Recorder(
@@ -161,11 +164,11 @@ class Parser:
     @property
     def packets_read(self) -> int:
         return self._packets_read
-    
+
     @property
     def bad_packets(self) -> int:
         return self._bad_packets
-    
+
     @property
     def unknown_packets(self) -> int:
         return self._unknown_packets
@@ -190,10 +193,10 @@ class Parser:
         payload_size = buf.readinto(payload)
 
         # byteswap below, takes the big endian payload and converts to little endian,
-        # for our system hardware, and sanity.        
+        # for our system hardware, and sanity.
         np.frombuffer(payload, dtype=np.uint32).byteswap(inplace=True)
         pkt_header = vita.vrt_header(payload)
-        packet_type = pkt_header.packet_type 
+        packet_type = pkt_header.packet_type
         indicators = pkt_header.indicators
 
         if (payload_size != expected_size):
@@ -226,7 +229,7 @@ class Parser:
             self._packets_read += 1
             self._bytes_read += (bytes_read + payload_size)
             return payload
-        
+
 
     def process_packet(self, packet_type: int, indicators: int, payload: bytes):
         # data is framed 1 frame per vita 49.2 packet
@@ -256,7 +259,7 @@ class Parser:
 
         else:
             print(f"unexpected packet type {packet_type:#06b}")
-            
+
 
     def parse_stream(self, stream: RawIOBase, progress_bar=None):
         if progress_bar is not None:

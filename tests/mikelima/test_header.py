@@ -2,7 +2,7 @@ import pytest
 import io
 import struct
 
-from bip.plugins.mikelima.header import read_message_header, unpack_SOM, read_first_header
+from bip.plugins.mikelima.header import read_message_header, unpack_som, read_first_header
 
 @pytest.fixture
 def fake_header():
@@ -19,7 +19,7 @@ def fake_header():
     yield h
 
 
-def test_unpack_SOM():
+def test_unpack_som():
     '''
     '''
     header_bytes = bytes.fromhex('F07FFF7FFF7FFF7F')
@@ -30,19 +30,18 @@ def test_unpack_SOM():
     h.write(struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12)) #SWDefinedWords
     h.write(bytes())
     h.seek(0)
-    
-    bytes_out, number_of_bytes_read = unpack_SOM(header_bytes, h)
-    
-    expected_payload = bytearray(36*8)
+
+    bytes_out, number_of_bytes_read = unpack_som(header_bytes, h)
+
     a = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SOM Header
     b = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SWDefined Words
     c = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SWDefinedWords
     expected_payload = a + b + c
-    
+
     assert bytes_out == expected_payload
     assert number_of_bytes_read == 36*8
-    
-    
+
+
 def test_read_message_header(fake_header):
     h = io.BytesIO()
     h.write(bytes.fromhex('F07FFF7FFF7FFF7FF07FFF7FFF7FFF7F')) #SOM Markers
@@ -51,19 +50,18 @@ def test_read_message_header(fake_header):
     h.write(struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12)) #SWDefinedWords
     h.write(bytes())
     h.seek(0)
-    
+
     bytes_out, number_of_bytes_read = read_message_header(fake_header)
-    
-    expected_payload = bytearray(36*8)
+
     a = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SOM Header
     b = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SWDefined Words
     c = struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12) #SWDefinedWords
     expected_payload = a + b + c
-    
+
     assert bytes_out == expected_payload
     assert number_of_bytes_read == 36*8
 
-def test_unpack_SOM_bad_header():
+def test_unpack_som_bad_header():
     header_bytes = bytes.fromhex('F07FFF7FFF7FFF7F')
     h = io.BytesIO()
     h.write(bytes.fromhex('F17FFF7FFF7FFF7FF07FFF7FFF7FFF7F')) #Wrong SOM Markers
@@ -72,12 +70,12 @@ def test_unpack_SOM_bad_header():
     h.write(struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12)) #SWDefinedWords
     h.write(bytes())
     h.seek(0)
-    
+
     with pytest.raises(RuntimeError):
-        bytes_out, number_of_bytes_read = unpack_SOM(header_bytes, h)
+        unpack_som(header_bytes, h)
 
 
-def test_unpack_SOM_end_of_file():
+def test_unpack_som_end_of_file():
     header_bytes = bytes.fromhex('F07FFF7FFF7FFF7F')
     h = io.BytesIO()
     h.write(bytes.fromhex('F07FFF7FFF7FFF7FF07FFF7FFF7FFF7F')) #Wrong SOM Markers
@@ -85,9 +83,9 @@ def test_unpack_SOM_end_of_file():
     h.write(struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12)) #SWDefined Words
     h.write(bytes())
     h.seek(0)
-    
+
     with pytest.raises(RuntimeError):
-        bytes_out, number_of_bytes_read = unpack_SOM(header_bytes, h)
+        unpack_som(header_bytes, h)
 
 
 def test_read_message_header_bad_header():
@@ -98,12 +96,12 @@ def test_read_message_header_bad_header():
     h.write(struct.pack("<QQQQQQQQQQQQ", 1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 11, 12)) #SWDefinedWords
     h.write(bytes())
     h.seek(0)
-    
+
     bytes_out, number_of_bytes_read = read_message_header(h)
-    
+
     assert bytes_out == 0
     assert number_of_bytes_read == 0
-    
+
 def test_read_first_header():
     h = io.BytesIO()
     h.write(bytes.fromhex('80040000446174613A202052617720436F6E74696E756F7573204F7574707574'))
@@ -115,11 +113,11 @@ def test_read_first_header():
     h.write(bytes.fromhex('64302F32303233313033302F536573736E3030312F4951302F00736973415F65'))
     h.write(bytes.fromhex('F07FFF7FFF7FFF7F'))
     h.seek(0)
-    
-    length, orphan_data, timestamp, IQ_type, session_id, increment, timestamp_from_filename = read_first_header(h)
+
+    length, orphan_data, timestamp, iq_type, session_id, _, _= read_first_header(h)
     assert length == 32*7
     assert timestamp == 1698697125454677
-    assert IQ_type == 0
+    assert iq_type == 0
     assert session_id == 1
     assert len(orphan_data) == 0
 
@@ -141,8 +139,8 @@ def test_read_first_header_orphan_data():
     h.write(struct.pack("<QQQQQQQQQQQQ", 8, 8, 8, 8, 8, 8, 8, 8 , 8, 8, 8, 8)) #Nonsense
     h.write(bytes.fromhex('F07FFF7FFF7FFF7F'))
     h.seek(0)
-    
-    length, orphan_data, timestamp, IQ_type, session_id, increment, timestamp_from_filename = read_first_header(h)
+
+    length, orphan_data, timestamp, _, _, _, _ = read_first_header(h)
     assert len(orphan_data) == 1
     assert length == ((32*7) + (36*8)) # 7 lines of 32 bytes at the top, 36 Q values of nonsense
     assert timestamp == 1698697125454677
@@ -157,6 +155,5 @@ def test_read_first_bad_header():
     h.write(bytes.fromhex('455F425F56315F4951305F303031392E62696E002F736973646174612F726169'))
     h.seek(0)
     with pytest.raises(RuntimeError):
-        length, timestamp, IQ_type, session_id, increment, timestamp_from_filename = read_first_header(h)
+        read_first_header(h)
 
-    

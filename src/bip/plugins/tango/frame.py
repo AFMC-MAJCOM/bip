@@ -1,5 +1,6 @@
 import struct
 from io import (RawIOBase, SEEK_SET)
+from typing import Tuple, Optional
 
 import pyarrow as pa
 
@@ -17,7 +18,7 @@ def unpack_header(header_bytes: bytes):
     return header >> 20, header & 0xFFFFF
 
 
-def _check_vrlp(b: bytes) -> int:
+def _check_vrlp(b: bytes):
     if len(b) == 0:
         return None
     elif len(b) != 4:
@@ -26,13 +27,13 @@ def _check_vrlp(b: bytes) -> int:
         raise RuntimeError("expected VRLP header not found")
 
 
-def read_header(stream: RawIOBase) -> int:
+def read_header(stream: RawIOBase) -> Tuple[int, Optional[Tuple[int, int]]]:
     buffer = stream.read(4)
     offset = 4
 
     if len(buffer) == 0:
         return 0, None
-    
+
     # This while loop makes sure that we are actually
     # at the start of the next packet ignoring garbage
     # that sometimes appears in packets
@@ -40,7 +41,7 @@ def read_header(stream: RawIOBase) -> int:
         try:
             _check_vrlp(buffer)
             break
-        except Exception as e:
+        except RuntimeError:
             pass
 
         offset += 4
@@ -68,7 +69,7 @@ def first_header(stream: RawIOBase):
         try:
             _check_vrlp(b)
             break
-        except Exception as e:
+        except RuntimeError:
             pass
 
         offset += 4

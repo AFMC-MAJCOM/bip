@@ -4,7 +4,7 @@ from io import BytesIO
 from bip.non_vita import mblb as mb
 
 @pytest.fixture
-def fake_SOM():
+def fake_som():
     content = [
             0x060300000000000A, # word0-Lane1_word1-CI_Number, Lane1_ID
             0x060300000000000B, # word1-Lane2_word1-CI_Number, Lane2_ID
@@ -52,9 +52,9 @@ def fake_SOM():
     for c in content:
         f.write(c.to_bytes(8, byteorder='big'))
     return content, f.getvalue()
-    
+
 @pytest.fixture
-def fake_SOP():
+def fake_sop():
     content = [
             0xEFBEEDFEADDEBAAB, # word0-Lane1_word1-
                                 #   packet_number, mode_tag, CI_number
@@ -66,14 +66,14 @@ def fake_SOP():
             0x0000000000000000, # word4-Lane2_word2
             0x0000000000000000, # word5-Lane3_word2
             0xAAF3065410013412, # word6-Lane1_word3-
-                                #   BTI_number, RF, CAGC, 
-                                #   Rx_beam_id, Rx_config, 
+                                #   BTI_number, RF, CAGC,
+                                #   Rx_beam_id, Rx_config,
                                 #   channelizer_chan, DBF,routing_index
             0x0000000000000000, # word7-Lane2_word3
             0x0000000000000000, # word8-Lane3_word3
             0xECBA00E059EABAAD, # word9-Lane1_word4-
                                 #   lane1_ID, path_id, path_width,
-                                #   subpath_id, subpath_width, DV, RS, 
+                                #   subpath_id, subpath_width, DV, RS,
                                 #   valid_channels_beams,
                                 #   channels_beams_per_subpath
             0x00000000000000AE, # word10-Lane2_word4
@@ -83,13 +83,13 @@ def fake_SOP():
     for c in content:
         f.write(c.to_bytes(8, byteorder='big'))
     return content, f.getvalue()
-    
+
 @pytest.fixture
-def fake_EOM():
+def fake_eom():
     content = [
             0xEFBEEDFE0000ADDE, # word0-Lane1_word1-
                                 #   packet_count, mode_tag, CI_number
-            0xAEBCEFBEADDEEDFE, # word1-Lane2_word1- 
+            0xAEBCEFBEADDEEDFE, # word1-Lane2_word1-
                                 #   error status, message_number, subCCI_number
             0xBABAEFBEADDEEDFE, # word2-Lane3_word1- CRC
             0x0000000000000000, # word3-Lane1_word2
@@ -108,85 +108,85 @@ def fake_EOM():
     for c in content:
         f.write(c.to_bytes(8, byteorder='big'))
     return content, f.getvalue()
-    
-    
-def test_SOM(fake_SOM):
-    _ , payload = fake_SOM
+
+
+def test_som(fake_som):
+    _ , payload = fake_som
     timestamp = 123456789
-    IQ_type = 5
+    iq_type = 5
     session_id = 15
     increment = 4
     timestamp_from_filename = 19411207120000
-    mblb_SOM_obj = mb.mblb_SOM(payload, timestamp, IQ_type, session_id, increment, timestamp_from_filename)
-    assert mblb_SOM_obj.IQ_type == 5
-    assert mblb_SOM_obj.session_id == 15
-    assert mblb_SOM_obj.lane1_ID == 0x0A
-    assert mblb_SOM_obj.lane2_ID == 0x0B
-    assert mblb_SOM_obj.lane3_ID == 0x0C
-    assert mblb_SOM_obj.message_number == 0x11
-    assert mblb_SOM_obj.CI_number == 0x0306
-    assert mblb_SOM_obj.SI_number == 0x22
-    assert mblb_SOM_obj.path_id == 0x33
-    assert mblb_SOM_obj.path_width == 0x44
-    assert mblb_SOM_obj.subpath_id == 0x5
-    assert mblb_SOM_obj.subpath_width == 0x6
-    assert mblb_SOM_obj.BE == 1
-    assert mblb_SOM_obj.beam_select == 0b11
-    assert mblb_SOM_obj.AFS_mode == 0b0101
-    assert mblb_SOM_obj.SchedNum == 0xDEAD
-    assert mblb_SOM_obj.SIinSchedNum == 0xBEEF
-    assert mblb_SOM_obj.high_gain == 0xFEEDBEEF
-    assert mblb_SOM_obj.EventStartTime_us == 1
-    assert mblb_SOM_obj.BTI_length == 1
-    assert mblb_SOM_obj.Dwell == 1
-    assert mblb_SOM_obj.freq_GHz == 4.560
-    assert isinstance(mblb_SOM_obj.message_key, str)
-    assert mblb_SOM_obj._timestamp == 123456789
-    
-def test_SOP(fake_SOP):
-    _, payload = fake_SOP
-    mblb_SOP_obj = mb.mblb_Packet(payload)
-    assert mblb_SOP_obj.packet_number == 0xABBA
-    assert mblb_SOP_obj.mode_tag == 0xDEAD
-    assert mblb_SOP_obj.CI_number == 0xFEEDBEEF
-    assert mblb_SOP_obj.packet_size == 0xDEADABBA
-    assert mblb_SOP_obj.data_fmt == 0xAC
-    assert mblb_SOP_obj.event_id == 0xBE    
-    assert mblb_SOP_obj.message_number == 0x9A
-    assert mblb_SOP_obj.subCCI_number == 0x88
-    assert mblb_SOP_obj.BTI_number == 0x1234
-    assert mblb_SOP_obj.RF == 4
-    assert mblb_SOP_obj.CAGC == 256
-    assert mblb_SOP_obj.Rx_beam_id == 0x54
-    assert mblb_SOP_obj.Rx_config == 1
-    assert mblb_SOP_obj.channelizer_chan == 47
-    assert mblb_SOP_obj.DBF == 3
-    assert mblb_SOP_obj.routing_index == 0xAA
-    assert mblb_SOP_obj.lane1_ID == 0xAD
-    assert mblb_SOP_obj.lane2_ID == 0xAE
-    assert mblb_SOP_obj.lane3_ID == 0xAF
-    assert mblb_SOP_obj.path_id == 0xBA
-    assert mblb_SOP_obj.path_width == 0xEA
-    assert mblb_SOP_obj.subpath_id == 0x5
-    assert mblb_SOP_obj.subpath_width == 0x9
-    assert mblb_SOP_obj.DV == 1
-    assert mblb_SOP_obj.RS == 1
-    assert mblb_SOP_obj.valid_channels_beams == 0xBA
-    assert mblb_SOP_obj.channels_beams_per_subpath == 0xEC
+    mblb_som_obj = mb.MblbSOM(payload, timestamp, iq_type, session_id, increment, timestamp_from_filename)
+    assert mblb_som_obj.iq_type == 5
+    assert mblb_som_obj.session_id == 15
+    assert mblb_som_obj.lane1_id == 0x0A
+    assert mblb_som_obj.lane2_id == 0x0B
+    assert mblb_som_obj.lane3_id == 0x0C
+    assert mblb_som_obj.message_number == 0x11
+    assert mblb_som_obj.ci_number == 0x0306
+    assert mblb_som_obj.si_number == 0x22
+    assert mblb_som_obj.path_id == 0x33
+    assert mblb_som_obj.path_width == 0x44
+    assert mblb_som_obj.subpath_id == 0x5
+    assert mblb_som_obj.subpath_width == 0x6
+    assert mblb_som_obj.be == 1
+    assert mblb_som_obj.beam_select == 0b11
+    assert mblb_som_obj.afs_mode == 0b0101
+    assert mblb_som_obj.sched_num == 0xDEAD
+    assert mblb_som_obj.si_in_sched_num == 0xBEEF
+    assert mblb_som_obj.high_gain == 0xFEEDBEEF
+    assert mblb_som_obj.event_start_time_us == 1
+    assert mblb_som_obj.bti_length == 1
+    assert mblb_som_obj.dwell == 1
+    assert abs(mblb_som_obj.freq_ghz - 4.560) < 1e-6
+    assert isinstance(mblb_som_obj.message_key, str)
+    assert mblb_som_obj._timestamp == 123456789
 
-def test_EOM(fake_EOM):
-    _ , payload = fake_EOM
-    mblb_EOM_obj = mb.mblb_EOM(payload)
-    assert mblb_EOM_obj.packet_count == 0xDEAD
-    assert mblb_EOM_obj.CI_number == 0xFEEDBEEF
-    assert mblb_EOM_obj.error_status == 0xFEEDDEADBEEF
-    assert mblb_EOM_obj.message_number == 0xBC
-    assert mblb_EOM_obj.subCCI_number == 0xAE
-    assert mblb_EOM_obj.CRC == 0xFEEDDEADBEEFBABA
-    assert mblb_EOM_obj.lane1_ID == 0x4
-    assert mblb_EOM_obj.lane2_ID == 0x5
-    assert mblb_EOM_obj.lane3_ID == 0x6
-    assert mblb_EOM_obj.path_id == 0xCB
-    assert mblb_EOM_obj.path_width == 0xAE
-    assert mblb_EOM_obj.subpath_id == 0xE
-    assert mblb_EOM_obj.subpath_width == 0xF
+def test_sop(fake_sop):
+    _, payload = fake_sop
+    mblb_sop_obj = mb.MblbPacket(payload)
+    assert mblb_sop_obj.packet_number == 0xABBA
+    assert mblb_sop_obj.mode_tag == 0xDEAD
+    assert mblb_sop_obj.ci_number == 0xFEEDBEEF
+    assert mblb_sop_obj.packet_size == 0xDEADABBA
+    assert mblb_sop_obj.data_fmt == 0xAC
+    assert mblb_sop_obj.event_id == 0xBE
+    assert mblb_sop_obj.message_number == 0x9A
+    assert mblb_sop_obj.sub_cci_number == 0x88
+    assert mblb_sop_obj.bti_number == 0x1234
+    assert mblb_sop_obj.rf == 4
+    assert mblb_sop_obj.cagc == 256
+    assert mblb_sop_obj.rx_beam_id == 0x54
+    assert mblb_sop_obj.rx_config == 1
+    assert mblb_sop_obj.channelizer_chan == 47
+    assert mblb_sop_obj.dbf == 3
+    assert mblb_sop_obj.routing_index == 0xAA
+    assert mblb_sop_obj.lane1_id == 0xAD
+    assert mblb_sop_obj.lane2_id == 0xAE
+    assert mblb_sop_obj.lane3_id == 0xAF
+    assert mblb_sop_obj.path_id == 0xBA
+    assert mblb_sop_obj.path_width == 0xEA
+    assert mblb_sop_obj.subpath_id == 0x5
+    assert mblb_sop_obj.subpath_width == 0x9
+    assert mblb_sop_obj.dv == 1
+    assert mblb_sop_obj.rs == 1
+    assert mblb_sop_obj.valid_channels_beams == 0xBA
+    assert mblb_sop_obj.channels_beams_per_subpath == 0xEC
+
+def test_eom(fake_eom):
+    _ , payload = fake_eom
+    mblb_eom_obj = mb.MblbEOM(payload)
+    assert mblb_eom_obj.packet_count == 0xDEAD
+    assert mblb_eom_obj.ci_number == 0xFEEDBEEF
+    assert mblb_eom_obj.error_status == 0xFEEDDEADBEEF
+    assert mblb_eom_obj.message_number == 0xBC
+    assert mblb_eom_obj.sub_cci_number == 0xAE
+    assert mblb_eom_obj.crc == 0xFEEDDEADBEEFBABA
+    assert mblb_eom_obj.lane1_id == 0x4
+    assert mblb_eom_obj.lane2_id == 0x5
+    assert mblb_eom_obj.lane3_id == 0x6
+    assert mblb_eom_obj.path_id == 0xCB
+    assert mblb_eom_obj.path_width == 0xAE
+    assert mblb_eom_obj.subpath_id == 0xE
+    assert mblb_eom_obj.subpath_width == 0xF

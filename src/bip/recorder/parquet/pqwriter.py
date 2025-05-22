@@ -73,9 +73,6 @@ class PQWriter:
         }
 
     def __del__(self):
-        try:
-            if not self._closed:
-                self.close()
-        except:
-            pass
+        if not self._closed:
+            self.close()
 

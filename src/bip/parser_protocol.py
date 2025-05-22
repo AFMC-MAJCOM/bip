@@ -12,23 +12,37 @@ class Parser(Protocol):
             input_path: Path,
             output_path: Path,
             recorder: Recorder,
-            recorder_opts: dict = {}
+            recorder_opts: dict = None
             ):
+        """
+        Defines the protocol for the protocol constructor.
+        """
         pass
 
-
     def parse_stream(self, stream: RawIOBase, progress_bar: tqdm.tqdm) -> None:
+        """
+        Parses a stream of binary data for a specific format.
+        """
         pass
 
     @property
     def metadata(self) -> dict:
+        """
+        Information about this parser.
+        """
         pass
 
     @property
     def bytes_read(self) -> int:
+        """
+        How many bytes have been read by this parser from the stream.
+        """
         pass
 
     @property
     def packets_read(self) -> int:
+        """
+        How many packets have been read by this parser from the stream.
+        """
         pass
 

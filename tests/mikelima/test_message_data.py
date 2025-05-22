@@ -6,11 +6,11 @@ import uuid
 from pathlib import Path
 
 from bip.recorder.dummy.dummywriter import DummyWriter
-from bip.plugins.mikelima.message_data import Process_Message
+from bip.plugins.mikelima.message_data import ProcessMessage
 from bip.non_vita import mblb as mb
 
 @pytest.fixture
-def fake_SOM():
+def fake_som():
     content = [
             0x060300000000000A, # word0-Lane1_word1-CI_Number, Lane1_ID
             0x060300000000000B, # word1-Lane2_word1-CI_Number, Lane2_ID
@@ -58,7 +58,7 @@ def fake_SOM():
     for c in content:
         f.write(c.to_bytes(8, byteorder='big'))
     return content, f.getvalue()
-    
+
 
 @pytest.fixture
 def fake_packet():
@@ -78,38 +78,38 @@ def fake_message(fake_packet):
     fake_message = fake_packet + fake_packet + fake_packet
     yield fake_message
 
-def test_process_message(fake_message, fake_SOM):
-    _ , payload = fake_SOM
+def test_process_message(fake_message, fake_som):
+    _ , payload = fake_som
     timestamp = 123456789
-    IQ_type = 5
+    iq_type = 5
     session_id = 15
     increment = 4
     timestamp_from_filename = 19411207120000
-    fake_SOM_obj = mb.mblb_SOM(payload, timestamp, IQ_type, session_id, increment, timestamp_from_filename)
-    
-    message_processor =  Process_Message(Path(), DummyWriter, IQ_type = IQ_type)
-    number_of_packets = message_processor.process_msg(fake_message, fake_SOM_obj)
-    
+    fake_som_obj = mb.MblbSOM(payload, timestamp, iq_type, session_id, increment, timestamp_from_filename)
+
+    message_processor =  ProcessMessage(Path(), DummyWriter, iq_type = iq_type)
+    number_of_packets = message_processor.process_msg(fake_message, fake_som_obj)
+
     assert number_of_packets == 3
 
 
 def test_read_packets(fake_message, fake_packet):
-    message_processor =  Process_Message(Path(), DummyWriter)
-    
+    message_processor =  ProcessMessage(Path(), DummyWriter)
+
     packet_list = message_processor.read_packets(fake_message)
 
     assert len(packet_list) == 3
     assert list(packet_list[0]) == list(fake_packet)
-    
+
 def test_read_orphan_packets(fake_packet):
-    IQ_type = 5
+    iq_type = 5
     session_id = 15
     increment = 4
     timestamp_from_filename = 19411207120000
-    
+
     fake_packet_list = [fake_packet, fake_packet]
-    message_processor =  Process_Message(Path(), DummyWriter)
-    
-    orphan_packet_number = message_processor.process_orphan_packets(fake_packet_list, IQ_type, session_id, increment, timestamp_from_filename)
-    
+    message_processor =  ProcessMessage(Path(), DummyWriter)
+
+    orphan_packet_number = message_processor.process_orphan_packets(fake_packet_list, iq_type, session_id, increment, timestamp_from_filename)
+
     assert orphan_packet_number == 2

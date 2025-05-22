@@ -1,4 +1,3 @@
-import struct
 from pathlib import Path
 
 import pyarrow as pa
@@ -6,6 +5,7 @@ import numpy as np
 
 from bip.vita import ExtensionCommandPacket as VitaExtensionCommandPacket
 from bip.common import bit_manipulation
+from typing import Optional
 
 
 _schema = [
@@ -74,9 +74,12 @@ class AckR_Packet:
     def __init__(self,
             output_path: Path,
             Recorder: type,
-            recorder_opts: dict = {},
+            recorder_opts: Optional[dict] = None,
             batch_size: int = 1000,
             **kwargs):
+        if recorder_opts is None:
+            recorder_opts = {}
+
         self.options = kwargs
         self.recorder = Recorder(
                 output_path,
@@ -94,7 +97,7 @@ class AckR_Packet:
             ):
         assert isinstance(packet, _ExtensionCommandPacket)
         header = packet.packet_header
-    
+
 
         self.recorder.add_record({
             "packet_id": np.uint32(self.packet_id),

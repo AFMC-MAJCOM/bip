@@ -36,7 +36,7 @@ _schema = [
 
     ("samples_i", pa.list_(pa.int16(), -1)),
     ("samples_q", pa.list_(pa.int16(), -1)),
-    
+
     ("data_key", pa.string())
 ]
 
@@ -63,20 +63,23 @@ class _SignalDataPacket(SignalDataPacket):
         tsi = self.integer_timestamp
         tsf0, tsf1 = self.fractional_timestamp
         self.time = bit_manipulation.time(tsi, tsf0, tsf1)
-        
+
         if ("{stream_id}" in context_key):
             self.context_packet_key = context_key.format(stream_id=self.stream_id)
         else:
             self.context_packet_key = context_key
-            
+
 
 class SignalData:
     def __init__(self,
             output_path: Path,
             Recorder: type,
-            recorder_opts: dict = {},
+            recorder_opts: dict = None,
             batch_size: int = 1000,
             **kwargs):
+
+        if recorder_opts is None:
+            recorder_opts = {}
 
         self.recorder = Recorder(
                 output_path,
@@ -97,7 +100,7 @@ class SignalData:
 
         self.recorder.add_record({
             "packet_id": np.uint32(self.packet_id),
-            
+
             "packet_size": np.uint16(header.packet_size),
             "packet_count": np.uint16(header.packet_count),
             "tsfd": np.uint8(header.tsf),
@@ -124,7 +127,7 @@ class SignalData:
 
             "samples_i": packet.data[:,0],
             "samples_q": packet.data[:,1],
-            
+
             "data_key": packet.context_packet_key
         })
 

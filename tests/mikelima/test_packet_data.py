@@ -5,15 +5,15 @@ import numpy as np
 import uuid
 from pathlib import Path
 
-from bip.non_vita.mblb import mblb_Packet
+from bip.non_vita.mblb import MblbPacket
 from bip.non_vita import mblb as mb
-from bip.plugins.mikelima.IQ0_packet_data import Process_IQ0_Packet
-from bip.plugins.mikelima.IQ5_packet_data import Process_IQ5_Packet
+from bip.plugins.mikelima.IQ0_packet_data import ProcessIq0Packet
+from bip.plugins.mikelima.IQ5_packet_data import ProcessIq5Packet
 from bip.recorder.dummy.dummywriter import DummyWriter
 
 
 @pytest.fixture
-def fake_IQ0_packet():
+def fake_iq0_packet():
     a = bytes.fromhex('F17FFF7FFF7FFF7FF17FFF7FFF7FFF7FF17FFF7FFF7FFF7F') #SOP Markers
     b = struct.pack("<QQQ", 0xEFBEEDFEADDEBAAB, 0x0000000000000000, 0x0000000000000000) #SOP Header word 1
     c = struct.pack("<QQQ", 0x000000608805BEAC, 0x0000000000000000, 0x0000000000000000) #SOP Header word 2
@@ -26,7 +26,7 @@ def fake_IQ0_packet():
     yield packet
 
 @pytest.fixture
-def fake_IQ5_packet():
+def fake_iq5_packet():
     a = bytes.fromhex('F17FFF7FFF7FFF7FF17FFF7FFF7FFF7FF17FFF7FFF7FFF7F') #SOP Markers
     b = struct.pack("<QQQ", 0xEFBEEDFEADDEBAAB, 0x0000000000000000, 0x0000000000000000) #SOP Header word 1
     c = struct.pack("<QQQ", 0x000000608805BEAC, 0x0000000000000000, 0x0000000000000000) #SOP Header word 2
@@ -51,10 +51,10 @@ def fake_packet_bad_event_id():
     h = struct.pack("<QQ", 0x0A0B0C0D0A0B0C0D, 0x0A0B0C0D0A0B0C0D) #Data
     packet = bytearray(a+b+c+d+e+f+g+h)
     yield packet
-    
+
 
 @pytest.fixture
-def fake_SOM():
+def fake_som():
     content = [
             0x060300000000000A, # word0-Lane1_word1-CI_Number, Lane1_ID
             0x060300000000000B, # word1-Lane2_word1-CI_Number, Lane2_ID
@@ -104,58 +104,58 @@ def fake_SOM():
     return content, f.getvalue()
 
 
-def test_process_IQ0_packet(fake_IQ0_packet, fake_SOM):
-    SOP_obj = mblb_Packet(fake_IQ0_packet[24:120])
-    packet_processor =  Process_IQ0_Packet(Path(), DummyWriter)
-    _ , payload = fake_SOM
+def test_process_iq0_packet(fake_iq0_packet, fake_som):
+    sop_obj = MblbPacket(fake_iq0_packet[24:120])
+    packet_processor =  ProcessIq0Packet(Path(), DummyWriter)
+    _ , payload = fake_som
     timestamp = 123456789
-    IQ_type = 2
+    iq_type = 2
     packet_list_index = 4
     session_id = 15
     increment = 4
     timestamp_from_filename = 19411207120000
-    SOM_obj = mb.mblb_SOM(payload, timestamp, IQ_type, session_id, increment, timestamp_from_filename)
-    
-    packet_processor.process_packet(fake_IQ0_packet, SOP_obj, SOM_obj, packet_list_index)
-    
+    som_obj = mb.MblbSOM(payload, timestamp, iq_type, session_id, increment, timestamp_from_filename)
+
+    packet_processor.process_packet(fake_iq0_packet, sop_obj, som_obj, packet_list_index)
+
     assert packet_processor.time == 123456794
-    
+
     assert np.array_equal(
             packet_processor.left_data[0],
             np.array([0x0c0d, 0x0a0b], dtype = np.int16))
     assert len(packet_processor.left_data) == 10
-    
+
     assert np.array_equal(
             packet_processor.right_data[0],
             np.array([0x0c0d, 0x0a0b], dtype = np.int16))
     assert len(packet_processor.right_data) == 10
 
 
-def test_process_IQ5_packet(fake_IQ5_packet, fake_SOM):
-    SOP_obj = mblb_Packet(fake_IQ5_packet[24:120])
-    packet_processor =  Process_IQ5_Packet(Path(), DummyWriter)
-    _ , payload = fake_SOM
+def test_process_iq5_packet(fake_iq5_packet, fake_som):
+    sop_obj = MblbPacket(fake_iq5_packet[24:120])
+    packet_processor =  ProcessIq5Packet(Path(), DummyWriter)
+    _ , payload = fake_som
     timestamp = 123456789
-    IQ_type = 5
+    iq_type = 5
     session_id = 15
     increment = 4
     timestamp_from_filename = 19411207120000
-    SOM_obj = mb.mblb_SOM(payload, timestamp, IQ_type, session_id, increment, timestamp_from_filename)
+    som_obj = mb.MblbSOM(payload, timestamp, iq_type, session_id, increment, timestamp_from_filename)
 
-    packet_processor.process_packet(fake_IQ5_packet, SOP_obj, SOM_obj, 4)
-    
+    packet_processor.process_packet(fake_iq5_packet, sop_obj, som_obj, 4)
+
     assert packet_processor.time == 123456794
-    
+
     assert np.array_equal(
             packet_processor.left_data[0],
             np.array([0x0c0d, 0x0a0b], dtype = np.int16))
     assert len(packet_processor.left_data) == 10
-    
+
     assert np.array_equal(
             packet_processor.right_data[0],
             np.array([0x0c0d, 0x0a0b], dtype = np.int16))
     assert len(packet_processor.right_data) == 10
-    
+
     assert np.array_equal(
             packet_processor.center_data[0],
             np.array([0x0c0d, 0x0a0b], dtype = np.int16))

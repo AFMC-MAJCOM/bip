@@ -43,7 +43,7 @@ _schema = [
     ("tx_buffer_free_13", pa.uint32(), None),
     ("tx_buffer_free_14", pa.uint32(), None),
     ("tx_buffer_free_15", pa.uint32(), None),
-    
+
     ("rx_buffer_free_0", pa.uint32(), None),
     ("rx_buffer_free_1", pa.uint32(), None),
     ("rx_buffer_free_2", pa.uint32(), None),
@@ -60,7 +60,7 @@ _schema = [
     ("rx_buffer_free_13", pa.uint32(), None),
     ("rx_buffer_free_14", pa.uint32(), None),
     ("rx_buffer_free_15", pa.uint32(), None),
-    
+
     ("tx_stream_id_0", pa.uint32(), None),
     ("tx_stream_id_1", pa.uint32(), None),
     ("tx_stream_id_2", pa.uint32(), None),
@@ -77,7 +77,7 @@ _schema = [
     ("tx_stream_id_13", pa.uint32(), None),
     ("tx_stream_id_14", pa.uint32(), None),
     ("tx_stream_id_15", pa.uint32(), None),
-    
+
     ("rx_stream_id_0", pa.uint32(), None),
     ("rx_stream_id_1", pa.uint32(), None),
     ("rx_stream_id_2", pa.uint32(), None),
@@ -94,7 +94,7 @@ _schema = [
     ("rx_stream_id_13", pa.uint32(), None),
     ("rx_stream_id_14", pa.uint32(), None),
     ("rx_stream_id_15", pa.uint32(), None),
-    
+
     ("system_time", pa.float64(), "nsec"),
 
     ("frame_index", pa.uint32(),None),
@@ -138,7 +138,7 @@ class _HeartbeatContextPacket(ContextPacket):
         self.tx_buffer_free_13 = int(self.words[20])
         self.tx_buffer_free_14 = int(self.words[21])
         self.tx_buffer_free_15 = int(self.words[22])
-    
+
         self.rx_buffer_free_0 = int(self.words[23])
         self.rx_buffer_free_1 = int(self.words[24])
         self.rx_buffer_free_2 = int(self.words[25])
@@ -155,7 +155,7 @@ class _HeartbeatContextPacket(ContextPacket):
         self.rx_buffer_free_13 = int(self.words[36])
         self.rx_buffer_free_14 = int(self.words[37])
         self.rx_buffer_free_15 = int(self.words[38])
-    
+
         self.tx_stream_id_0 = int(self.words[39])
         self.tx_stream_id_1 = int(self.words[40])
         self.tx_stream_id_2 = int(self.words[41])
@@ -172,7 +172,7 @@ class _HeartbeatContextPacket(ContextPacket):
         self.tx_stream_id_13 = int(self.words[52])
         self.tx_stream_id_14 = int(self.words[53])
         self.tx_stream_id_15 = int(self.words[54])
-    
+
         self.rx_stream_id_0 = int(self.words[55])
         self.rx_stream_id_1 = int(self.words[56])
         self.rx_stream_id_2 = int(self.words[57])
@@ -189,7 +189,7 @@ class _HeartbeatContextPacket(ContextPacket):
         self.rx_stream_id_13 = int(self.words[68])
         self.rx_stream_id_14 = int(self.words[69])
         self.rx_stream_id_15 = int(self.words[70])
-    
+
         self.system_time = float(self.words[71:73].view(dtype = np.float64))
 
 
@@ -197,9 +197,12 @@ class HeartbeatContext:
     def __init__(self,
             output_path: Path,
             Recorder: type,
-            recorder_opts: dict = {},
+            recorder_opts: dict = None,
             batch_size: int = 1000,
             **kwargs):
+
+        if recorder_opts is None:
+            recorder_opts = {}
 
         self.recorder = Recorder(
                 output_path,
@@ -220,7 +223,7 @@ class HeartbeatContext:
 
         self.recorder.add_record({
             "packet_id": np.uint32(self.packet_id),
-            
+
             "packet_size": np.uint16(header.packet_size),
             "packet_count": np.uint16(header.packet_count),
             "tsfd": np.uint8(header.tsf),
@@ -237,7 +240,7 @@ class HeartbeatContext:
             "tsf0": np.uint32(packet.fractional_timestamp[0]),
             "tsf1": np.uint32(packet.fractional_timestamp[1]),
             "time": np.float64(packet.time),
-            
+
             "tx_buffer_free_0": np.uint32(packet.tx_buffer_free_0),
             "tx_buffer_free_1": np.uint32(packet.tx_buffer_free_1),
             "tx_buffer_free_2": np.uint32(packet.tx_buffer_free_2),
@@ -254,7 +257,7 @@ class HeartbeatContext:
             "tx_buffer_free_13": np.uint32(packet.tx_buffer_free_13),
             "tx_buffer_free_14": np.uint32(packet.tx_buffer_free_14),
             "tx_buffer_free_15": np.uint32(packet.tx_buffer_free_15),
-    
+
             "rx_buffer_free_0": np.uint32(packet.rx_buffer_free_0),
             "rx_buffer_free_1": np.uint32(packet.rx_buffer_free_1),
             "rx_buffer_free_2": np.uint32(packet.rx_buffer_free_2),
@@ -271,7 +274,7 @@ class HeartbeatContext:
             "rx_buffer_free_13": np.uint32(packet.rx_buffer_free_13),
             "rx_buffer_free_14": np.uint32(packet.rx_buffer_free_14),
             "rx_buffer_free_15": np.uint32(packet.rx_buffer_free_15),
-    
+
             "tx_stream_id_0": np.uint32(packet.tx_stream_id_0),
             "tx_stream_id_1": np.uint32(packet.tx_stream_id_1),
             "tx_stream_id_2": np.uint32(packet.tx_stream_id_2),
@@ -288,7 +291,7 @@ class HeartbeatContext:
             "tx_stream_id_13": np.uint32(packet.tx_stream_id_13),
             "tx_stream_id_14": np.uint32(packet.tx_stream_id_14),
             "tx_stream_id_15": np.uint32(packet.tx_stream_id_15),
-    
+
             "rx_stream_id_0": np.uint32(packet.rx_stream_id_0),
             "rx_stream_id_1": np.uint32(packet.rx_stream_id_1),
             "rx_stream_id_2": np.uint32(packet.rx_stream_id_2),
@@ -305,9 +308,9 @@ class HeartbeatContext:
             "rx_stream_id_13": np.uint32(packet.rx_stream_id_13),
             "rx_stream_id_14": np.uint32(packet.rx_stream_id_14),
             "rx_stream_id_15": np.uint32(packet.rx_stream_id_15),
-    
+
             "system_time": np.float64(packet.system_time),
-            
+
             "frame_index": np.uint32(frame_index),
             "packet_index": np.uint32(packet_index),
         })

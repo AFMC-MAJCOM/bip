@@ -27,7 +27,7 @@ def _save_metadata(
         "format": file_format_metadata,
         "parser": bip_metadata(),
     } | kwargs
-    
+
     with open(metadata_file, "w", encoding="utf-8") as metadata_file:
         json.dump(metadata_dict,
             metadata_file,
@@ -50,7 +50,7 @@ def parse_bin_stream(
     if not isinstance(parser, Parser):
         raise ValueError("parser does not support bip Parser protocol")
     if not isinstance(stream, io.BufferedIOBase):
-        raise ValueError(f"parameter stream is not a binary stream")
+        raise ValueError("parameter stream is not a binary stream")
     if not isinstance(output_dir, Path):
         raise ValueError(f"parameter output_dir: {output_dir} is not of type pathlib.Path")
     if output_dir.exists() and not output_dir.is_dir():

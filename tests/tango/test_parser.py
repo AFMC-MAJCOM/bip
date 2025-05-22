@@ -45,7 +45,7 @@ def test_bad_header_no_vrlp():
 
         parser = Parser(Path(), Path(), DummyWriter, logging.WARNING)
         with pytest.raises(RuntimeError):
-            payload = parser.read_packet(f)
+            parser.read_packet(f)
 
 
 def test_bad_header_no_vend():
@@ -56,8 +56,8 @@ def test_bad_header_no_vend():
         f.seek(0)
 
         parser = Parser(Path(), Path(), DummyWriter, logging.WARNING)
-        payload, size = parser.read_packet(f)
-        
+        payload, _ = parser.read_packet(f)
+
         assert payload == "BAD_PACKET"
 
 def test_bad_header_short():
@@ -67,7 +67,7 @@ def test_bad_header_short():
 
         parser = Parser(Path(), Path(), DummyWriter, logging.WARNING)
         with pytest.raises(RuntimeError):
-            payload = parser.read_packet(f)
+            parser.read_packet(f)
 
 def test_read_custom_packet_empty():
     parser = Parser(Path(), Path(), DummyWriter, logging.WARNING)
@@ -92,7 +92,7 @@ def test_bad_packet_containing_deadbeef_clean():
     expected_payload = struct.pack("<IIIII", 1, 2, 3, 4, 5)
     assert payload == expected_payload
     assert payload_size == (len(expected_payload) / 4)
-    
+
 def test_bad_packet_containing_multiple_deadbeef_clean():
     f = io.BytesIO()
     f.write(bytes("PLRV", encoding="ascii"))
@@ -118,7 +118,7 @@ def test_bad_packet_containing_deadbeef_noclean():
     f.write(bytes("EFBEADDEEFBEADDEEFBEADDEEFBEADDE", encoding="ascii"))
     f.write(bytes("DNEV", encoding="ascii"))
     f.seek(0)
-    
+
     parser =  Parser(Path(), Path(), DummyWriter, logging.WARNING)
     payload, payload_size = parser.read_packet(f)
 
@@ -132,16 +132,16 @@ def process_packet_unhandled_packet_type():
     f.write(bytes("DNEV", encoding="ascii"))
     packet_type = 11
     class_id = 65537
-    
+
     parser =  Parser(Path(), Path(), DummyWriter, logging.WARNING)
-    
+
     # When the packet_type is unhandled process_packet
     # will attempt to access self. variables that are not
     # initialized here throwing a runtime error
     with pytest.raises(RuntimeError):
         parser.process_packet(packet_type, class_id, f)
 
-    
+
 def test_bad_packet_size_smaller_than_stated():
     f = io.BytesIO()
     f.write(bytes("PLRV", encoding="ascii"))
@@ -149,7 +149,7 @@ def test_bad_packet_size_smaller_than_stated():
     f.write(bytes("DNEV", encoding="ascii"))
     f.write(bytes("PLRV", encoding="ascii"))
     f.seek(0)
-    
+
     parser = Parser(Path(), Path(), DummyWriter, logging.WARNING)
     payload, payload_size = parser.read_packet(f)
 

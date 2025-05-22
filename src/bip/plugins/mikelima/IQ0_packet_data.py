@@ -66,15 +66,18 @@ def _schema_elt(e: tuple) -> dict:
 
 IQ0_schema = [ _schema_elt(e) for e in _IQ0_packet_schema ]
 
-class Process_IQ0_Packet():
+class ProcessIq0Packet():
     def __init__(self,
             output_path: Path,
             Recorder: type,
-            recorder_opts: dict = {},
+            recorder_opts: dict = None,
             batch_size: int = 10,
             **kwargs):
+        if recorder_opts is None:
+            recorder_opts = {}
+
         self.options = kwargs
-        
+
         self.packet_recorder = Recorder(
                 output_path,
                 schema=pa.schema([(e[0], e[1]) for e in _IQ0_packet_schema]),
@@ -88,52 +91,52 @@ class Process_IQ0_Packet():
 
 
     def __add_record(self,
-            packet: mblb.mblb_Packet,
+            packet: mblb.MblbPacket,
             left_data,
             right_data
             ):
         '''
         Add a row to the packet_content parquet
         '''
-        assert isinstance(packet, mblb.mblb_Packet)
-    
+        assert isinstance(packet, mblb.MblbPacket)
+
         self.packet_recorder.add_record({
-            "IQ_type": np.uint8(self.IQ_type),
+            "IQ_type": np.uint8(self.iq_type),
             "session_id": np.uint8(self.session_id),
             "increment": np.uint32(self.increment),
             "timestamp_from_filename": np.uint64(self.timestamp_from_filename),
             "packet_number": np.uint16(packet.packet_number),
             "mode_tag": np.uint16(packet.mode_tag),
-            "CI_number": np.uint32(packet.CI_number),
+            "CI_number": np.uint32(packet.ci_number),
             "packet_size": np.uint32(packet.packet_size),
             "data_fmt": np.uint8(packet.data_fmt),
             "event_id": np.uint8(packet.event_id),
             "message_number": np.uint8(packet.message_number),
-            "subCCI_number": np.uint8(packet.subCCI_number),
-            "BTI_number": np.uint16(packet.BTI_number),
-            "RF": np.uint8(packet.RF),
-            "CAGC": np.uint8(packet.CAGC),
-            "Rx_beam_id": np.uint8(packet.Rx_beam_id),
-            "Rx_config": np.uint8(packet.Rx_config),
+            "subCCI_number": np.uint8(packet.sub_cci_number),
+            "BTI_number": np.uint16(packet.bti_number),
+            "RF": np.uint8(packet.rf),
+            "CAGC": np.uint8(packet.cagc),
+            "Rx_beam_id": np.uint8(packet.rx_beam_id),
+            "Rx_config": np.uint8(packet.rx_config),
             "sample_rate": np.uint32(self.sample_rate),
             "channelizer_chan": np.uint16(packet.channelizer_chan),
-            "DBF": np.uint8(packet.DBF),
+            "DBF": np.uint8(packet.dbf),
             "routing_index": np.uint8(packet.routing_index),
-            "packet_lane1_id": np.uint8(packet.lane1_ID),
-            "packet_lane2_id": np.uint8(packet.lane2_ID),
-            "packet_lane3_id": np.uint8(packet.lane3_ID),
+            "packet_lane1_id": np.uint8(packet.lane1_id),
+            "packet_lane2_id": np.uint8(packet.lane2_id),
+            "packet_lane3_id": np.uint8(packet.lane3_id),
             "path_id": np.uint8(packet.path_id),
             "path_width": np.uint8(packet.path_width),
             "subpath_id": np.uint8(packet.subpath_id),
             "subpath_width": np.uint8(packet.subpath_width),
-            "DV": np.uint8(packet.DV),
-            "RS": np.uint8(packet.RS),
+            "DV": np.uint8(packet.dv),
+            "RS": np.uint8(packet.rs),
             "valid_channels_beams": np.uint8(packet.valid_channels_beams),
-            "channels_beams_per_subpath": 
+            "channels_beams_per_subpath":
                 np.uint8(packet.channels_beams_per_subpath),
-            "AFS_mode": np.float32(self.AFS_mode),
-            "SchedNum": np.float32(self.SchedNum),
-            "SIinSchedNum": np.float32(self.SIinSchedNum),
+            "AFS_mode": np.float32(self.afs_mode),
+            "SchedNum": np.float32(self.sched_num),
+            "SIinSchedNum": np.float32(self.si_in_sched_num),
             "time": np.float64(self.time / 1000000), #us to s
             "samples_i_left": left_data[:,0],
             "samples_q_left": left_data[:,1],
@@ -144,51 +147,51 @@ class Process_IQ0_Packet():
     @property
     def metadata(self) -> dict :
         return self.packet_recorder.metadata | {"schema": IQ0_schema}
-        
-    def process_orphan_packet(self, packet: bytearray, SOP_obj, IQ_type: int, session_id: int, increment: int, timestamp_from_filename: int):
-        data = np.frombuffer(packet, 
+
+    def process_orphan_packet(self, packet: bytearray, sop_obj, iq_type: int, session_id: int, increment: int, timestamp_from_filename: int):
+        data = np.frombuffer(packet,
                             offset=np.uint64(LANES*(MARKER_BYTES+HEADER_BYTES)),
-                            count=np.uint64((len(packet) - (LANES*(MARKER_BYTES+HEADER_BYTES)))/2), 
+                            count=np.uint64((len(packet) - (LANES*(MARKER_BYTES+HEADER_BYTES)))/2),
                             dtype = np.int16).reshape((-1, 2))
         self.time = np.nan
         self.left_data = data[::2]
         self.right_data = data[1::2]
-        self.IQ_type = IQ_type
+        self.iq_type = iq_type
         self.session_id = session_id
         self.increment = increment - 1
         self.timestamp_from_filename = timestamp_from_filename
-        self.sample_rate = 1280/(2**SOP_obj.Rx_config)
-        self.AFS_mode = np.nan
-        self.SchedNum = np.nan
-        self.SIinSchedNum = np.nan
-        self.__add_record(SOP_obj, self.left_data, self.right_data)
+        self.sample_rate = 1280/(2**sop_obj.rx_config)
+        self.afs_mode = np.nan
+        self.sched_num = np.nan
+        self.si_in_sched_num = np.nan
+        self.__add_record(sop_obj, self.left_data, self.right_data)
 
-    def process_packet(self, stream: bytearray, packet, SOM_obj, packet_list_index):
+    def process_packet(self, stream: bytearray, packet, som_obj, packet_list_index):
         '''
-        the packet is passed in, now we stream the data (I/Q) into a 
+        the packet is passed in, now we stream the data (I/Q) into a
         1 dimensional array of 2 values per element (I/Q)
         The format in the word is IB QB IA QA, laid out across 64 bits with
-        B the later sample and A being the earlier sample.  
-        
-        we know that bytearray starts at SOP and ends 
+        B the later sample and A being the earlier sample.
+
+        we know that bytearray starts at SOP and ends
         right before the next SOP or EOM
         '''
-        self.sample_rate = 1280/(2**packet.Rx_config)
+        self.sample_rate = 1280/(2**packet.rx_config)
 
-        data = np.frombuffer(stream, 
+        data = np.frombuffer(stream,
                             offset=np.uint64(LANES*(MARKER_BYTES+HEADER_BYTES)),
-                            count=np.uint64(2*SOM_obj.Dwell*BEAMS*self.sample_rate), 
+                            count=np.uint64(2*som_obj.dwell*BEAMS*self.sample_rate),
                             dtype = np.int16).reshape((-1, 2))
 
         self.left_data = data[::2]
         self.right_data = data[1::2]
-        self.time = SOM_obj.Time_since_epoch_us + (packet_list_index * SOM_obj.Dwell)
-        self.IQ_type = SOM_obj.IQ_type
-        self.session_id = SOM_obj.session_id
-        self.increment = SOM_obj.increment
-        self.timestamp_from_filename = SOM_obj.timestamp_from_filename
-        self.AFS_mode = SOM_obj.AFS_mode
-        self.SchedNum = SOM_obj.SchedNum
-        self.SIinSchedNum = SOM_obj.SIinSchedNum
-        
+        self.time = som_obj.time_since_epoch_us + (packet_list_index * som_obj.dwell)
+        self.iq_type = som_obj.iq_type
+        self.session_id = som_obj.session_id
+        self.increment = som_obj.increment
+        self.timestamp_from_filename = som_obj.timestamp_from_filename
+        self.afs_mode = som_obj.afs_mode
+        self.sched_num = som_obj.sched_num
+        self.si_in_sched_num = som_obj.si_in_sched_num
+
         self.__add_record(packet, self.left_data, self.right_data)
