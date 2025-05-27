@@ -1,0 +1,9 @@
+include:
+  - project: saber/devsecops-pipelines
+    ref: fixed-paths
+    file: .python_docker-ci.yml
+    inputs:
+      source_path: "src"
+      pyproject_path: "."
+      tests_path: "tests/"
+      sonar_project_key: saber_rf-data-product_bip_eeb150b4-9fd1-45ef-ac39-16a8f27b1b67
