@@ -161,8 +161,14 @@ def add_random_context_packet(bin_file, packet_count, payload_size):
     field_d = random.randint(0, 1024)
     bin_file.write(struct.pack('I', field_d))
 
-    field_e = random.choice([payload_size / 4, payload_size / 40,
-                      payload_size / 400, payload_size / 4000])
+    field_e = random.choice(
+        [
+            payload_size / 4,
+            payload_size / 40,
+            payload_size / 400,
+            payload_size / 4000
+        ]
+    )
     bin_file.write(struct.pack('Q', field_e))
 
     field_f = random.gauss(1704067200000, 100000000000)
@@ -327,47 +333,47 @@ def add_random_extension_context_packet(bin_file):
     cif3 = 0b00110000000011001111100000000000
     bin_file.write(struct.pack('<I', cif3))
 
-    A = 0XFFFFFFFF
-    bin_file.write(struct.pack('I', A))
+    field_a = 0XFFFFFFFF
+    bin_file.write(struct.pack('I', field_a))
 
-    B = 1
-    bin_file.write(struct.pack('I', B))
+    field_b = 1
+    bin_file.write(struct.pack('I', field_b))
 
-    C = 4
-    bin_file.write(struct.pack('I', C))
+    field_c = 4
+    bin_file.write(struct.pack('I', field_c))
 
-    D = 128
-    bin_file.write(struct.pack('I', D))
+    field_d = 128
+    bin_file.write(struct.pack('I', field_d))
 
-    E = 1024
-    bin_file.write(struct.pack('I', E))
+    field_e = 1024
+    bin_file.write(struct.pack('I', field_e))
 
-    F = random.randint(0, 2147483648)
-    bin_file.write(struct.pack('I', F))
+    field_f = random.randint(0, 2147483648)
+    bin_file.write(struct.pack('I', field_f))
 
-    G = random.randint(0, 2147483648)
-    bin_file.write(struct.pack('I', G))
+    field_g = random.randint(0, 2147483648)
+    bin_file.write(struct.pack('I', field_g))
 
-    H = random.randint(0, 2147483648)
-    bin_file.write(struct.pack('I', H))
+    field_h = random.randint(0, 2147483648)
+    bin_file.write(struct.pack('I', field_h))
 
-    I = random.randint(0, 2147483648)
-    bin_file.write(struct.pack('I', I))
+    field_i = random.randint(0, 2147483648)
+    bin_file.write(struct.pack('I', field_i))
 
-    J = random.randint(0, 2147483648)
-    bin_file.write(struct.pack('I', J))
+    field_j = random.randint(0, 2147483648)
+    bin_file.write(struct.pack('I', field_j))
 
-    K = random.randint(0, 10)
-    bin_file.write(struct.pack('I', K))
+    field_k = random.randint(0, 10)
+    bin_file.write(struct.pack('I', field_k))
 
-    L = random.randint(0, 10)
-    bin_file.write(struct.pack('I', L))
+    field_l = random.randint(0, 10)
+    bin_file.write(struct.pack('I', field_l))
 
-    M = random.randint(0, 4294967296)
-    bin_file.write(struct.pack('Q', M))
+    field_m = random.randint(0, 4294967296)
+    bin_file.write(struct.pack('Q', field_m))
 
-    N = 0x01001101000000000000000000000000
-    bin_file.write(struct.pack('I', N))
+    field_n = 0x01001101000000000000000000000000
+    bin_file.write(struct.pack('I', field_n))
 
     add_packet_trailer(bin_file)
 
