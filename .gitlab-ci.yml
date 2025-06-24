@@ -1,6 +1,5 @@
 include:
   - project: saber/devsecops-pipelines
-    ref: fixed-paths
     file: .python_docker-ci.yml
     inputs:
       source_path: "src"
