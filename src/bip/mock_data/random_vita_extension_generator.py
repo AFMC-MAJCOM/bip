@@ -53,10 +53,10 @@ def add_random_data_packet(bin_file, packet_number):
     bin_file.write(struct.pack('<I', packet_size))
 
     for _ in range(packet_size):
-        I = random.randint(-40, 40)
-        Q = random.randint(-40, 40)
-        bin_file.write(struct.pack('<h', I))
-        bin_file.write(struct.pack('<h', Q))
+        sample_i = random.randint(-40, 40)
+        sample_q = random.randint(-40, 40)
+        bin_file.write(struct.pack('<h', sample_i))
+        bin_file.write(struct.pack('<h', sample_q))
 
     add_packet_trailer(bin_file)
 

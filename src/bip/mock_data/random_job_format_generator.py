@@ -8,10 +8,10 @@ def add_random_data_packet(bin_file, payload_size, trailer_size):
     bin_file.write(struct.pack('I', payload_size))
 
     for _ in range(payload_size / 4):
-        I = random.randint(-40, 40)
-        Q = random.randint(-40, 40)
-        bin_file.write(struct.pack('<h', I))
-        bin_file.write(struct.pack('<h', Q))
+        sample_i = random.randint(-40, 40)
+        sample_q = random.randint(-40, 40)
+        bin_file.write(struct.pack('<h', sample_i))
+        bin_file.write(struct.pack('<h', sample_q))
 
     for _ in range(trailer_size):
         trailer_data = 0xAAAAAAAA
@@ -75,8 +75,14 @@ def add_random_job_event_header(bin_file, payload_size, trailer_size):
     field_d = random.randint(0, 1024)
     bin_file.write(struct.pack('I', field_d))
 
-    field_e = random.choice([payload_size / 4, payload_size / 40,
-                      payload_size / 400, payload_size / 4000])
+    field_e = random.choice(
+        [
+            payload_size / 4,
+            payload_size / 40,
+            payload_size / 400,
+            payload_size / 4000
+        ]
+    )
     bin_file.write(struct.pack('Q', field_e))
 
     field_f = random.gauss(1704067200000, 100000000000)
