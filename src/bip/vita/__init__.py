@@ -8,5 +8,6 @@ from . vrt_packet import VRTPacket
 def vrt_header(payload: bytes):
     return VRTPacketHeader(int.from_bytes(payload[0:4], byteorder='little'))
 
-def vrt_packet(payload:bytes):
+
+def vrt_packet(payload: bytes):
     return VRTPacket(payload)

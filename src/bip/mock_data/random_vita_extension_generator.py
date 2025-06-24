@@ -2,20 +2,23 @@ import struct
 import random
 import uuid
 
+
 def add_packet_header(bin_file):
     bin_file.write('P'.encode('utf-8'))
     bin_file.write('R'.encode('utf-8'))
     bin_file.write('L'.encode('utf-8'))
     bin_file.write('V'.encode('utf-8'))
 
-    frame_header = random.randint(20,40) << 20
-    bin_file.write(struct.pack('<I',frame_header))
+    frame_header = random.randint(20, 40) << 20
+    bin_file.write(struct.pack('<I', frame_header))
+
 
 def add_packet_trailer(bin_file):
     bin_file.write('D'.encode('utf-8'))
     bin_file.write('N'.encode('utf-8'))
     bin_file.write('E'.encode('utf-8'))
     bin_file.write('V'.encode('utf-8'))
+
 
 def add_random_data_packet(bin_file, packet_number):
     add_packet_header(bin_file)
@@ -42,18 +45,21 @@ def add_random_data_packet(bin_file, packet_number):
     '''
     header_start = 0b000000100000
     packet_size = 0b0000000000000000
-    header = bin(int(str(header_start)[2:])+ str(bin(packet_number))[2:].zfill(4) + str(packet_size)[2:])
-    bin_file.write(struct.pack('<I',header))
+    header = bin(int(str(header_start)[2:]) +
+                 str(bin(packet_number))[2:].zfill(4) +
+                 str(packet_size)[2:])
+    bin_file.write(struct.pack('<I', header))
 
     bin_file.write(struct.pack('<I', packet_size))
 
     for k in range(packet_size):
         I = random.randint(-40, 40)
-        Q = random.randint(-40,40)
+        Q = random.randint(-40, 40)
         bin_file.write(struct.pack('<h', I))
         bin_file.write(struct.pack('<h', Q))
 
     add_packet_trailer(bin_file)
+
 
 def add_random_context_packet(bin_file, packet_count, payload_size):
     add_packet_header(bin_file)
@@ -80,13 +86,15 @@ def add_random_context_packet(bin_file, packet_count, payload_size):
     '''
     header_start = 0b010100100000
     packet_size = 30
-    header = bin(int(str(header_start)[2:])+ str(bin(packet_count))[2:].zfill(4) + str(bin(packet_size))[2:].zfill(16))
-    bin_file.write(struct.pack('<I',header))
+    header = bin(int(str(header_start)[2:]) +
+                 str(bin(packet_count))[2:].zfill(4) +
+                 str(bin(packet_size))[2:].zfill(16))
+    bin_file.write(struct.pack('<I', header))
     '''
     Stream_ID will be provided by VAA upon allocation.
     '''
-    stream_id = random.randint(11,21)
-    bin_file.write(struct.pack('<I',stream_id))
+    stream_id = random.randint(11, 21)
+    bin_file.write(struct.pack('<I', stream_id))
 
     '''
     CIF0 Definition
@@ -125,13 +133,13 @@ def add_random_context_packet(bin_file, packet_count, payload_size):
     0   reserved    0
     '''
     cif0 = 0b00000000000000000000000010001000
-    bin_file.write(struct.pack('<I',cif0))
+    bin_file.write(struct.pack('<I', cif0))
 
     '''
     CIF3 Definition
     '''
     cif3 = 0b00000000000000000000000100000000
-    bin_file.write(struct.pack('<I',cif3))
+    bin_file.write(struct.pack('<I', cif3))
     '''
     CIF7 Definition
     31:19   not reserved    0
@@ -139,70 +147,72 @@ def add_random_context_packet(bin_file, packet_count, payload_size):
     1:0     reserved        0
     '''
     cif7 = 0b00000000000001111111111111111100
-    bin_file.write(struct.pack('<I',cif7))
+    bin_file.write(struct.pack('<I', cif7))
 
     A = random.randint(0, 2147483648)
-    bin_file.write(struct.pack('I',A))
+    bin_file.write(struct.pack('I', A))
 
     B = random.randint(0, 100)
-    bin_file.write(struct.pack('I',B))
+    bin_file.write(struct.pack('I', B))
 
     C = random.randint(0, 1024)
-    bin_file.write(struct.pack('I',C))
+    bin_file.write(struct.pack('I', C))
 
     D = random.randint(0, 1024)
-    bin_file.write(struct.pack('I',D))
+    bin_file.write(struct.pack('I', D))
 
-    E = random.choice([payload_size/4, payload_size/40, payload_size/400, payload_size/4000])
-    bin_file.write(struct.pack('Q',E))
+    E = random.choice([payload_size / 4, payload_size / 40,
+                      payload_size / 400, payload_size / 4000])
+    bin_file.write(struct.pack('Q', E))
 
     F = random.gauss(1704067200000, 100000000000)
-    bin_file.write(struct.pack('Q',F))
+    bin_file.write(struct.pack('Q', F))
 
-    G = random.randint(0,5)
-    bin_file.write(struct.pack('I',G))
+    G = random.randint(0, 5)
+    bin_file.write(struct.pack('I', G))
 
-    H = random.randint(0,10)
-    bin_file.write(struct.pack('I',H))
+    H = random.randint(0, 10)
+    bin_file.write(struct.pack('I', H))
 
-    I = random.uniform(0,55)
-    J = random.gauss(I,0.01)
-    bin_file.write(struct.pack('Q',J))
+    I = random.uniform(0, 55)
+    J = random.gauss(I, 0.01)
+    bin_file.write(struct.pack('Q', J))
 
-    bin_file.write(struct.pack('Q',I))
+    bin_file.write(struct.pack('Q', I))
 
     K = random.gauss(J, 0.1)
-    bin_file.write(struct.pack('Q',K))
+    bin_file.write(struct.pack('Q', K))
 
     L = random.randint(0, 2147483648)
-    bin_file.write(struct.pack('Q',L))
+    bin_file.write(struct.pack('Q', L))
 
-    pointing_elevation = random.randint(-90,90)
-    bin_file.write(struct.pack('<h',pointing_elevation))
+    pointing_elevation = random.randint(-90, 90)
+    bin_file.write(struct.pack('<h', pointing_elevation))
     pointing_azimuth = random.randint(0, 511)
-    bin_file.write(struct.pack('<h',pointing_azimuth))
+    bin_file.write(struct.pack('<h', pointing_azimuth))
 
     polarization_tilt_angle = random.choice([0, 12868])
-    bin_file.write(struct.pack('<h',polarization_tilt_angle))
+    bin_file.write(struct.pack('<h', polarization_tilt_angle))
     polarization_ellpticity = random.choice([0, 12868, 6434])
-    bin_file.write(struct.pack('<h',polarization_ellpticity))
+    bin_file.write(struct.pack('<h', polarization_ellpticity))
 
-    num_samples = payload_size/4
-    bin_file.write(struct.pack('I',num_samples))
+    num_samples = payload_size / 4
+    bin_file.write(struct.pack('I', num_samples))
 
-    bin_file.write(struct.pack('I',payload_size))
+    bin_file.write(struct.pack('I', payload_size))
 
     trailer_size = 0
-    bin_file.write(struct.pack('I',trailer_size))
+    bin_file.write(struct.pack('I', trailer_size))
 
     user_defined_data_size = 0
-    bin_file.write(struct.pack('I',user_defined_data_size))
+    bin_file.write(struct.pack('I', user_defined_data_size))
 
     for i in range(user_defined_data_size):
-        user_defined_data = random.randint(0,2048)
-        bin_file.write(struct.pack('I',user_defined_data))
+        user_defined_data = random.randint(0, 2048)
+        bin_file.write(struct.pack('I', user_defined_data))
 
     add_packet_trailer(bin_file)
+
 
 def add_random_extension_context_packet(bin_file):
     add_packet_header(bin_file)
@@ -229,13 +239,14 @@ def add_random_extension_context_packet(bin_file):
     '''
     header_start = 0b0101001000000001
     packet_size = 26
-    header = bin(int(str(header_start)[2:])+ str(bin(packet_size))[2:].zfill(16))
-    bin_file.write(struct.pack('<I',header))
+    header = bin(int(str(header_start)[2:]) +
+                 str(bin(packet_size))[2:].zfill(16))
+    bin_file.write(struct.pack('<I', header))
     '''
     Stream_ID will be provided by VAA upon allocation.
     '''
-    stream_id = random.randint(11,21)
-    bin_file.write(struct.pack('<I',stream_id))
+    stream_id = random.randint(11, 21)
+    bin_file.write(struct.pack('<I', stream_id))
 
     '''
     CIF0 Definition
@@ -274,7 +285,7 @@ def add_random_extension_context_packet(bin_file):
     0   reserved    0
     '''
     cif0 = 0b00000000000000000000000000001010
-    bin_file.write(struct.pack('<I',cif0))
+    bin_file.write(struct.pack('<I', cif0))
     '''
     CIF1 Definition
     31  phaseoffset         0   Phase Offset is not included in this packet
@@ -309,61 +320,62 @@ def add_random_extension_context_packet(bin_file):
     0   reserved            0
     '''
     cif1 = 0b00000000111000000001000100000000
-    bin_file.write(struct.pack('<I',cif1))
+    bin_file.write(struct.pack('<I', cif1))
     '''
     CIF3 Definition
     '''
     cif3 = 0b00110000000011001111100000000000
-    bin_file.write(struct.pack('<I',cif3))
+    bin_file.write(struct.pack('<I', cif3))
 
-    A  = 0XFFFFFFFF
-    bin_file.write(struct.pack('I',A))
+    A = 0XFFFFFFFF
+    bin_file.write(struct.pack('I', A))
 
     B = 1
-    bin_file.write(struct.pack('I',B))
+    bin_file.write(struct.pack('I', B))
 
     C = 4
-    bin_file.write(struct.pack('I',C))
+    bin_file.write(struct.pack('I', C))
 
     D = 128
-    bin_file.write(struct.pack('I',D))
+    bin_file.write(struct.pack('I', D))
 
     E = 1024
-    bin_file.write(struct.pack('I',E))
+    bin_file.write(struct.pack('I', E))
 
     F = random.randint(0, 2147483648)
-    bin_file.write(struct.pack('I',F))
+    bin_file.write(struct.pack('I', F))
 
     G = random.randint(0, 2147483648)
-    bin_file.write(struct.pack('I',G))
+    bin_file.write(struct.pack('I', G))
 
     H = random.randint(0, 2147483648)
-    bin_file.write(struct.pack('I',H))
+    bin_file.write(struct.pack('I', H))
 
     I = random.randint(0, 2147483648)
-    bin_file.write(struct.pack('I',I))
+    bin_file.write(struct.pack('I', I))
 
     J = random.randint(0, 2147483648)
-    bin_file.write(struct.pack('I',J))
+    bin_file.write(struct.pack('I', J))
 
     K = random.randint(0, 10)
-    bin_file.write(struct.pack('I',K))
+    bin_file.write(struct.pack('I', K))
 
     L = random.randint(0, 10)
-    bin_file.write(struct.pack('I',L))
+    bin_file.write(struct.pack('I', L))
 
     M = random.randint(0, 4294967296)
-    bin_file.write(struct.pack('Q',M))
+    bin_file.write(struct.pack('Q', M))
 
     N = 0x01001101000000000000000000000000
-    bin_file.write(struct.pack('I',N))
+    bin_file.write(struct.pack('I', N))
 
     add_packet_trailer(bin_file)
+
 
 def main():
     file_uuid = uuid.uuid4()
     file_name = f"MOCK_VITA_EXTENSION_DATA_{file_uuid}.bin"
-    number_of_events= 10
+    number_of_events = 10
     payload_size = 2621400
     data_packet_size = 65535
 
@@ -373,8 +385,9 @@ def main():
         for i in range(number_of_events):
             add_random_context_packet(bin_file, i, payload_size)
 
-        for j in range((number_of_events*payload_size)/data_packet_size):
-            add_random_data_packet(bin_file, j%number_of_events)
+        for j in range((number_of_events * payload_size) / data_packet_size):
+            add_random_data_packet(bin_file, j % number_of_events)
+
 
 if __name__ == "__main__":
     main()

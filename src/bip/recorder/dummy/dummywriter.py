@@ -10,11 +10,11 @@ class DummyWriter:
         return "dummy"
 
     def __init__(self,
-            filename: Path,
-            schema: pa.schema,
-            options: dict = None,
-            batch_size: int = 1000
-            ):
+                 filename: Path,
+                 schema: pa.schema,
+                 options: dict = None,
+                 batch_size: int = 1000
+                 ):
 
         if options is None:
             options = {}
@@ -59,13 +59,12 @@ class DummyWriter:
 
     @property
     def metadata(self) -> dict:
-        return  {
-                "output": str(self._filename),
-                "options": self._options,
-                "batch_size": self.batch_size
+        return {
+            "output": str(self._filename),
+            "options": self._options,
+            "batch_size": self.batch_size
         }
 
     def __del__(self):
         if not self._closed:
             self.close()
-
