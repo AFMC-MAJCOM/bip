@@ -52,7 +52,7 @@ def add_random_data_packet(bin_file, packet_number):
 
     bin_file.write(struct.pack('<I', packet_size))
 
-    for k in range(packet_size):
+    for _ in range(packet_size):
         I = random.randint(-40, 40)
         Q = random.randint(-40, 40)
         bin_file.write(struct.pack('<h', I))
@@ -149,42 +149,42 @@ def add_random_context_packet(bin_file, packet_count, payload_size):
     cif7 = 0b00000000000001111111111111111100
     bin_file.write(struct.pack('<I', cif7))
 
-    A = random.randint(0, 2147483648)
-    bin_file.write(struct.pack('I', A))
+    field_a = random.randint(0, 2147483648)
+    bin_file.write(struct.pack('I', field_a))
 
-    B = random.randint(0, 100)
-    bin_file.write(struct.pack('I', B))
+    field_b = random.randint(0, 100)
+    bin_file.write(struct.pack('I', field_b))
 
-    C = random.randint(0, 1024)
-    bin_file.write(struct.pack('I', C))
+    field_c = random.randint(0, 1024)
+    bin_file.write(struct.pack('I', field_c))
 
-    D = random.randint(0, 1024)
-    bin_file.write(struct.pack('I', D))
+    field_d = random.randint(0, 1024)
+    bin_file.write(struct.pack('I', field_d))
 
-    E = random.choice([payload_size / 4, payload_size / 40,
+    field_e = random.choice([payload_size / 4, payload_size / 40,
                       payload_size / 400, payload_size / 4000])
-    bin_file.write(struct.pack('Q', E))
+    bin_file.write(struct.pack('Q', field_e))
 
-    F = random.gauss(1704067200000, 100000000000)
-    bin_file.write(struct.pack('Q', F))
+    field_f = random.gauss(1704067200000, 100000000000)
+    bin_file.write(struct.pack('Q', field_f))
 
-    G = random.randint(0, 5)
-    bin_file.write(struct.pack('I', G))
+    field_g = random.randint(0, 5)
+    bin_file.write(struct.pack('I', field_g))
 
-    H = random.randint(0, 10)
-    bin_file.write(struct.pack('I', H))
+    field_h = random.randint(0, 10)
+    bin_file.write(struct.pack('I', field_h))
 
-    I = random.uniform(0, 55)
-    J = random.gauss(I, 0.01)
-    bin_file.write(struct.pack('Q', J))
+    field_i = random.uniform(0, 55)
+    field_j = random.gauss(field_i, 0.01)
+    bin_file.write(struct.pack('Q', field_j))
 
-    bin_file.write(struct.pack('Q', I))
+    bin_file.write(struct.pack('Q', field_i))
 
-    K = random.gauss(J, 0.1)
-    bin_file.write(struct.pack('Q', K))
+    field_k = random.gauss(field_j, 0.1)
+    bin_file.write(struct.pack('Q', field_k))
 
-    L = random.randint(0, 2147483648)
-    bin_file.write(struct.pack('Q', L))
+    field_l = random.randint(0, 2147483648)
+    bin_file.write(struct.pack('Q', field_l))
 
     pointing_elevation = random.randint(-90, 90)
     bin_file.write(struct.pack('<h', pointing_elevation))
@@ -207,7 +207,7 @@ def add_random_context_packet(bin_file, packet_count, payload_size):
     user_defined_data_size = 0
     bin_file.write(struct.pack('I', user_defined_data_size))
 
-    for i in range(user_defined_data_size):
+    for _ in range(user_defined_data_size):
         user_defined_data = random.randint(0, 2048)
         bin_file.write(struct.pack('I', user_defined_data))
 

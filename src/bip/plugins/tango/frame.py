@@ -1,4 +1,3 @@
-import struct
 from io import (RawIOBase, SEEK_SET)
 from typing import Tuple, Optional
 

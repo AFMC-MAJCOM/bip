@@ -1,4 +1,3 @@
-import traceback
 from io import RawIOBase
 from pathlib import Path
 import os
@@ -63,7 +62,7 @@ class Parser:
 
         self.options = kwargs
         self.clean = False
-        if kwargs.get("clean") == True:
+        if kwargs.get("clean") is True:
             self.clean = True
         self._bytes_read = 0
         self._packets_read = 0

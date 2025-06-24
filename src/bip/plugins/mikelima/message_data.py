@@ -1,5 +1,4 @@
 import pyarrow as pa
-import os
 from pathlib import Path
 import numpy as np
 from bip.common import numpy_manipulation
@@ -114,7 +113,7 @@ class ProcessMessage:
             # SOP is 3 32-byte headers
             assert packet[0:(LANES * MARKER_BYTES)] == START_OF_PACKET
             # skip the start of packet
-            sop = packet[(LANES * MARKER_BYTES)                         :(LANES * (MARKER_BYTES + HEADER_BYTES))]
+            sop = packet[(LANES * MARKER_BYTES):(LANES * (MARKER_BYTES + HEADER_BYTES))]
             sop_obj = mblb.MblbPacket(sop)
 
             self.packet_processor.process_orphan_packet(

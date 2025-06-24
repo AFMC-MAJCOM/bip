@@ -3,7 +3,6 @@ from bip.non_vita import mblb
 
 import pyarrow as pa
 import numpy as np
-import os
 
 BEAMS = 3
 LANES = 3

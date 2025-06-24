@@ -63,13 +63,14 @@ class PartitionedPQWriter(PQWriter):
 def new_partitioned_parquet_writer(
     partition_cols
 ):
-    constructor = lambda filename, schema, options={}, batch_size=1000: PartitionedPQWriter(
-        filename,
-        schema,
-        partition_cols,
-        options=options,
-        batch_size=batch_size
-    )
+    def constructor(filename, schema, options={}, batch_size=1000):
+        return PartitionedPQWriter(
+            filename,
+            schema,
+            partition_cols,
+            options=options,
+            batch_size=batch_size
+        )
 
     constructor.extension = PartitionedPQWriter.extension
 

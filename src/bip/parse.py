@@ -1,4 +1,3 @@
-import struct
 import io
 import sys
 import datetime

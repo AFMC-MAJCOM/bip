@@ -204,8 +204,8 @@ class _ContextPacket(ContextPacket):
         '''
         Rule 9.5.5-3 VITA 49.2 SPEC
         The IF Reference Frequency subfield shall use the 64-bit, two’s-complement format as shown in Figure 9.5.5-1.
-        This field has an integer and a fractional part, with the radix point to the right of bit 20 in the second 32-bit
-        word.
+        This field has an integer and a fractional part, with the radix point to the right of bit 20 in the second
+        32-bit word.
         range: +- 8.79 terahertz
         resolution: 0.95 microhertz
         '''
@@ -232,7 +232,8 @@ class _ContextPacket(ContextPacket):
 
         '''
         Rule 9.5.12-2
-        This field has an integer and a fractional part, with the radix point to the right of bit 20 in the second 32-bit word.
+        This field has an integer and a fractional part, with the radix point to the right of bit 20 in the second
+        32-bit word.
         range: [0.00, 8.79 terahertz]
         resolution: 0.95 micro-hertz
         '''
@@ -242,8 +243,8 @@ class _ContextPacket(ContextPacket):
         '''
         Rule 9.10.5-1
         The Temperature value shall be expressed in two's-complement
-        format in the lower 16 bits of this field. This field has an integer and a fractional part, with the radix point
-        to the right of bit 6.
+        format in the lower 16 bits of this field. This field has an integer and a fractional part, with the
+        radix point to the right of bit 6.
         range: -273.15 C to 511.984375 C.
         resolution: 0.015625 C (1/64 C) (Obesrvation 9.10.5-1)
         '''
@@ -268,8 +269,8 @@ class _ContextPacket(ContextPacket):
 
         '''
         Rule 9.4.8-3 VITA 49.2 SPEC
-        Tilt Angle value expressed in two's-complement format in the upper 16 bits of the Polarization field. This subfield has an
-        integer and a fractional part, with the radix point to the right of bit 7 of the subfield.
+        Tilt Angle value expressed in two's-complement format in the upper 16 bits of the Polarization field. This
+        subfield has an integer and a fractional part, with the radix point to the right of bit 7 of the subfield.
         '''
         self.tilt = int(tilt) * (2**-13)
 
@@ -330,7 +331,8 @@ class _ContextPacket(ContextPacket):
 
         '''
         Rule 9.7-1
-        "The most significant 32 bits shall be in the first of these two words. The lsb of each word shall be on the right."
+        "The most significant 32 bits shall be in the first of these two words. The lsb of each word shall be
+        on the right."
         LSB is 1 femtosecond (Rule 9.7-2)
         type: fractional time
         range: +- 9223 seconds (Observation 9.7-5)

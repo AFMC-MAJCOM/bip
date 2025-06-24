@@ -118,8 +118,15 @@ def read_first_header(stream: RawIOBase):
         stream.seek(-8, 1)
         timestamp, timestamp_from_filename = determine_timestamps(header)
         iq_type, session_id, increment = determine_iq_session_increment(header)
-        return len(
-            header), orphan_packet_list, timestamp, iq_type, session_id, increment, timestamp_from_filename
+        return (
+            len(header),
+            orphan_packet_list,
+            timestamp,
+            iq_type,
+            session_id,
+            increment,
+            timestamp_from_filename
+        )
     else:
         raise RuntimeError("cannot find first message")
 

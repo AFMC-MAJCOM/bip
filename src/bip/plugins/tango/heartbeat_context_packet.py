@@ -1,4 +1,3 @@
-import struct
 from pathlib import Path
 
 import pyarrow as pa

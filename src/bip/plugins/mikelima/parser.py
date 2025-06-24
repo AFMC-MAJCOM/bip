@@ -1,11 +1,8 @@
 from io import RawIOBase
 from pathlib import Path
-import traceback
 
 import numpy as np
 import pyarrow as pa
-
-from bip import non_vita
 
 from . __version__ import __version__ as version
 from . import header
@@ -286,7 +283,15 @@ class Parser:
         if progress_bar is not None:
             last_read = 0
 
-        num_bytes_read, orphan_packet_list, self._timestamp, self._iq_type, self._session_id, self._increment, self._timestamp_from_filename = header.read_first_header(
+        (
+            num_bytes_read,
+            orphan_packet_list,
+            self._timestamp,
+            self._iq_type,
+            self._session_id,
+            self._increment,
+            self._timestamp_from_filename
+        ) = header.read_first_header(
             stream)
 
         if self._iq_type == 5:

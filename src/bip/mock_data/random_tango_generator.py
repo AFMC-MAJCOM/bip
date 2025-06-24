@@ -60,11 +60,11 @@ def add_random_data_packet(bin_file, packet_count):
     tsf = random.randint(0, 18000000000000000000)
     bin_file.write(struct.pack('<Q', tsf))
 
-    for k in range(65534):
-        I = random.randint(-40, 40)
-        Q = random.randint(-40, 40)
-        bin_file.write(struct.pack('<h', I))
-        bin_file.write(struct.pack('<h', Q))
+    for _ in range(65534):
+        sample_i = random.randint(-40, 40)
+        sample_q = random.randint(-40, 40)
+        bin_file.write(struct.pack('<h', sample_i))
+        bin_file.write(struct.pack('<h', sample_q))
 
     add_packet_trailer(bin_file)
 
@@ -120,10 +120,10 @@ def add_random_context_packet(bin_file, packet_count):
     bin_file.write(struct.pack('<I', cif3))
     bandwidth = random.uniform(0.00, 8.79)
     bin_file.write(struct.pack('<d', bandwidth))
-    IF_freq = random.uniform(-8.79, 8.79)
-    bin_file.write(struct.pack('<d', IF_freq))
-    RF_freq = random.uniform(0, 55)
-    bin_file.write(struct.pack('<d', RF_freq))
+    if_freq = random.uniform(-8.79, 8.79)
+    bin_file.write(struct.pack('<d', if_freq))
+    rf_freq = random.uniform(0, 55)
+    bin_file.write(struct.pack('<d', rf_freq))
     gain1 = random.randint(-256, 256)
     bin_file.write(struct.pack('<h', gain1))
     gain2 = random.randint(-256, 256)
@@ -175,10 +175,10 @@ def add_random_context_packet(bin_file, packet_count):
     bin_file.write(struct.pack('<d', PRI))
     duration = 0.1
     bin_file.write(struct.pack('<d', duration))
-    VITA_filler = 4294967295
-    bin_file.write(struct.pack('<I', VITA_filler))
-    bin_file.write(struct.pack('<I', VITA_filler))
-    bin_file.write(struct.pack('<I', VITA_filler))
+    vita_filler = 4294967295
+    bin_file.write(struct.pack('<I', vita_filler))
+    bin_file.write(struct.pack('<I', vita_filler))
+    bin_file.write(struct.pack('<I', vita_filler))
 
     add_packet_trailer(bin_file)
 
