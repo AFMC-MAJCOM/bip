@@ -5,7 +5,32 @@ requires = [
 build-backend = 'setuptools.build_meta'
 
 # requires-python = ">= 3.9"
+[project]
+requires-python = ">= 3.9"
+name = "bip"
+description = "Parse Narrow-scope VITA 49.2 Data"
+
+version = "0.1.1"
+dependencies = [
+    "numpy==2.0.0",
+    "pandas",
+    "pyarrow==17.0.0",
+    "tqdm",
+    "numba"
+]
+
+[project.optional-dependencies]
+
+test = [
+    "pytest"
+]
+
+[project.scripts]
+bip = "bip.cli:main"
 
 [tool.poetry]
 name = "bip"
 version = "0.1.1"
+
+[tool.setuptools.packages.find]
+where = "src"
